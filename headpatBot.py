@@ -30,7 +30,6 @@ intents = disnake.Intents.none()
 
 bot=commands.Bot(
     intents=intents,
-    test_guilds=[741829543718944768],
     help_command=commands.DefaultHelpCommand()
 )
 servers=dict[int,guilds.Server]()
@@ -115,29 +114,7 @@ async def headpat(
         image=images.loadHeadpatImage()
         imageBytes=images.imageToBytes(image)
         attachment = File(imageBytes, filename = 'headpat.png')
-        await inter.send(responder.getResponse('HEADPAT.PASS'),file=attachment)
-
-#@bot.slash_command()
-#async def addHeadpat(
-#    inter:ApplicationCommandInteraction,
-#    pat:disnake.Attachment
-#    ):
-#    try:
-#        if pat.content_type.startswith('image'):
-#            #image to use, perhaps.
-#            imageBytes = BytesIO(await pat.read())
-#            images.saveHeadpatImage(imageBytes)
-#            response = responder.getResponse('HEADPAT.ADD.PASS')
-#    except Exception as err:
-#        response = responder.getResponse('HEADPAT.ADD.FAIL')
-#        logger.error(err)
-#    await inter.send(response)
-
-#@bot.slash_command() #test command TODO: Remove
-#async def cache(inter:ApplicationCommandInteraction):
-#    await inter.send('cache start')
-#    await cacheAll()
-#    await inter.send('cache done')
+        await inter.send(responder.getResponse('HEADPAT.PASS'),file=attachment)=
 
 ## Option Commands
 @bot.slash_command(
@@ -171,7 +148,6 @@ async def suggest(
     image:disnake.Attachment, 
     waifuData:WaifuData
 ):
-    #TODO: require confirmation from bot owner
     if image.content_type.startswith('image'):
         name=waifuData.name
         source=waifuData.source
@@ -179,7 +155,6 @@ async def suggest(
         await approval.getWaifuApproval(bot,image,name,source)
     else:
         await inter.send(responder.getResponse('WAIFU.ADD.NOT_IMAGE'))
-        #image to use, perhaps.
 
 @waifu.sub_command(
     description="Show an image of a waifu from the global database"
@@ -215,7 +190,6 @@ async def getList(
                 waifuData = waifuStr.split('/')
                 waifuList.write(f'{waifuData[1]} from {waifuData[0]}\n')
         else:
-            # TODO: send as text file
             waifus=servers[inter.guild.id].waifus
             reply = responder.getResponse('WAIFU.LIST.LOCAL',len(waifus))
             for waifu in waifus:
