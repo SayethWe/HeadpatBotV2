@@ -99,3 +99,6 @@ class Server:
 
     def addPoll(self,poll:Poll):
         self.polls.append(poll)
+
+    def removePoll(self,poll:Poll):
+        self.polls.remove(poll)

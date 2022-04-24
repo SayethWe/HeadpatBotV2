@@ -86,6 +86,6 @@ WAIFU: #waifu
       - Not enough waifus avaialable! Add more and try again.
   LIST:
     GLOBAL:
-      - this is not available yet, unfortunately.
+      - There are {0} waifus in the global database
     LOCAL:
       - Found {0} Waifus in your Server

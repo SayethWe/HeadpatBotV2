@@ -25,13 +25,13 @@ import images, responder, guilds, polls, approval, database, headpatExceptions
 import glob
 
 TOKEN=os.environ['DISCORD_TOKEN']
-
 intents = disnake.Intents.none()
 
 bot=commands.Bot(
     intents=intents,
     help_command=commands.DefaultHelpCommand()
 )
+
 servers=dict[int,guilds.Server]()
 
 # Helpers
@@ -69,12 +69,14 @@ async def getWaifu(
 async def on_ready(): #events to fire on a sucessful reconnection
     logger.info(f"Logging in as {bot.user}")
     storageCog = bot.get_cog('StorageCog')
+    await storageCog.loadFiles()
     for guild in bot.guilds:
         try:
             servers[guild.id] = database.getGuildPickle(guild.id)
         except (UnpicklingError, TypeError):
             servers[guild.id]=guilds.Server.load(guild.id)
         logger.info(f"loading server {guild.name} with id {guild.id}")
+    logger.info('bot is ready')
 
 @bot.event
 async def on_disconnect(): #events to fire when closing
@@ -188,10 +190,12 @@ async def getList(
     reply = ""
     with open('Waifus.txt','w') as waifuList:
         if scope == "Global":
-            reply = responder.getResponse('WAIFU.LIST.GLOBAL')
+            count=0
             for waifuStr in glob.glob('*/*/',root_dir=images.POLL_FOLDER):
                 waifuData = waifuStr.split('/')
                 waifuList.write(f'{waifuData[1]} from {waifuData[0]}\n')
+                count+=1
+            reply = responder.getResponse('WAIFU.LIST.GLOBAL',count)
         else:
             waifus=servers[inter.guild.id].waifus
             reply = responder.getResponse('WAIFU.LIST.LOCAL',len(waifus))
@@ -245,16 +249,35 @@ async def pullCSV(
     inter:ApplicationCommandInteraction,
     csv:disnake.Attachment, 
 ):
+    await inter.response.defer()
     if csv.content_type.startswith('text/csv'):
         waifus=await csv.read()
         waifus = waifus.decode()
         waifus = waifus.split('\n')
-        for waifu in waifus:
-            info=waifu.split(',')
-            servers[inter.guild.id].addWaifu(info[0],info[1])
-        await inter.send(responder.getResponse('WAIFU.PULL.CSV.PASS', len(waifus)))
+        with open(f"failedList{inter.guild.id}.txt",'w') as failedList:
+            failedList.write("Failed Waifus:\n")
+            numFailed=0
+            for waifu in waifus:
+                logger.debug(waifu)
+                waifu=waifu.replace('\r','').replace('\n','')
+                info=waifu.split(',')
+                try:
+                    servers[inter.guild.id].addWaifu(info[0],info[1])
+                except headpatExceptions.WaifuDNEError:
+                    numFailed+=1
+                    failedList.write(f'unable to find in database: {waifu}\n')
+                except headpatExceptions.WaifuConflictError:
+                    numFailed+=1
+                    failedList.write(f'already present in server:  {waifu}\n')
+
+        if(numFailed>0):
+            with open(f"failedList{inter.guild.id}.txt",'rb') as failedList:
+                file = disnake.File(failedList,filename="Failed Waifus.txt")
+                await inter.send(responder.getResponse('WAIFU.PULL.CSV.PASS', len(waifus)-numFailed),file=file,ephemeral=True)
+        else:
+            await inter.send(responder.getResponse('WAIFU.PULL.CSV.PASS', len(waifus)))
     else:
-        await inter.send(responder.getResponse('WAIFU.PULL.CSV.NOT_CSV'))
+        await inter.send(responder.getResponse('WAIFU.PULL.CSV.NOT_CSV'),ephemeral=True)
 
 
 ### Poll Commands
@@ -287,7 +310,7 @@ async def start(
         (names, sources) = newPoll.startPoll(pollGuild.waifus)
     except headpatExceptions.InsufficientOptionsError as err:
         await inter.send(responder.getResponse('WAIFU.POLL.INSUFFICIENT'),ephemeral=True)
-        newPoll.endPoll(bot)
+        pollGuild.removePoll(newPoll)
         return
     # 2 create image
     image = images.createPollImage(names,sources)
@@ -370,7 +393,7 @@ class StorageCog(commands.Cog):
     @tasks.loop(hours=2)
     @storeFiles.after_loop
     async def storeDatabase(self):
-        logger.info('Saving to database')
+        logger.info('Saving filesystem to database')
         for server in servers.values():
             database.storeGuildPickle(server)
         for waifuImage in glob.glob('*/*/*.qoi',root_dir=images.POLL_FOLDER):
@@ -384,6 +407,7 @@ class StorageCog(commands.Cog):
         await self.bot.wait_until_ready()
 
     async def loadFiles(self):
+        logger.info('Fetching from Database to File System')
         allWaifus=database.getAllWaifus()
         for waifu in allWaifus:
             name=waifu[0]
@@ -395,7 +419,5 @@ class StorageCog(commands.Cog):
         for guildId in allGuilds:
             database.getGuildPickle(guildId).save()
 
-storageCog=StorageCog(bot)
-bot.add_cog(storageCog)
-asyncio.run(storageCog.loadFiles())
+bot.add_cog(StorageCog(bot))
 bot.run(TOKEN)

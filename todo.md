@@ -4,7 +4,7 @@ _Future Feature_
 ~~cancelled~~
 
 - [x] Write README.md
-- [ ] Add more Waifus
+- [x] Add more Waifus
 - [ ] Add More Headpats
 - [ ] **Test Bot**
     - Will always need more testing

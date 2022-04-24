@@ -92,7 +92,7 @@ class Poll():
         nl = int(np.ceil(0.3*pollSize)) #...bottom of range...
         na = pollSize-(nh+nm+nl)#...and entire range
 
-        if max(nh,nl) >= 0.25*len(indices)-na: #we're gonna have a problem
+        if max(nh,nl) >= 0.25*(len(indices)-na): #we're gonna have a problem
             raise InsufficientOptionsError
 
         selected=np.zeros(pollSize,dtype=np.int64)
