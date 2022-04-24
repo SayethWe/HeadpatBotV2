@@ -1,0 +1,91 @@
+# Responses
+ACTIVITY:
+  PLAYING:
+    - with waifus while you're not looking
+  WATCHING:
+    - over your waifus for you
+ERROR:
+  GENERIC:
+    - Something Went Wrong
+  NOT_PERMITTED:
+    - You don't have permission for that!
+    - That command was not for you to use.
+  ARGUMENT:
+    - You'll have to tell me more than that before I can do anything
+OPTION:
+  GET:
+  - value of {0} is {1}
+  SET:
+  - setting option {0} to {1}
+  INVALID:
+  - value {1} is outside range for {0}responde
+HEADPAT:
+  FAIL:
+    - \*sob\* Something kept me from giving you a headpat
+  PASS:
+    - headpat!
+  ADD: #unused
+    PASS:
+    - headpat added!
+    FAIL:
+    - headpat could not be added!
+WAIFU: #waifu
+  ERROR:
+    DNE:
+      - Who? I don't know of anyone called {0} in {1}
+    CONFLICT:
+      - you already have {0} here, Silly.
+  ADD: #suggest
+    NOT_IMAGE:
+      - That's not an image, silly
+    WAIT:
+      - Your Waifu has been sent in for approval!
+    ASK: # 0-waifu name, 1-source name
+      - approve {0} from {1}?
+    ANNOUNCE: # 0-waifu name, 1-source name
+      - I am glad to announce that {0} from {1} is now available!
+      - Everyone, meet {0}, joining us from {1}
+    APPROVE:
+      - approved {0}
+    DENY:
+      - rejected {0}
+  SHOW: #show
+    PASS:
+      - ding! Your waifu is ready!
+  REMOVE: #remove
+    PASS:
+      - Okay! {0} is gone. Less competition for me!
+      - They're Gone. Good riddance.
+  PULL: #pull
+    PASS: # 0-waifu name, 1-source name
+      - Added {0} from {1} to your server!
+    CSV: #pullCSV
+      PASS:
+        - Added {0} waifus. Do you think that's enough?
+      NOT_CSV:
+        - that's not a valid file type
+  POLL:
+    EXISTS:
+      - you already have a poll running here!
+    OPEN:
+      - voting time!
+    CLOSE:
+      - poll closed!
+    NONE:
+      - You don't have a poll to close!
+    VOTE:
+      ADD:
+        - you voted for {0}. How Cute.
+      REMOVE:
+        - your vote for {0} is gone. Pick better next time?
+      CONFIRM:
+        - votes saved!
+      CLOSED:
+        - That poll is no longer taking votes
+    INSUFFICIENT:
+      - Not enough waifus avaialable! Add more and try again.
+  LIST:
+    GLOBAL:
+      - this is not available yet, unfortunately.
+    LOCAL:
+      - Found {0} Waifus in your Server
