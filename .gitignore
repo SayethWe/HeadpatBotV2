@@ -1,0 +1,12 @@
+.venv
+.vscode
+img/waifu
+guilds
+postgre
+__pycache__
+utilities
+
+headpatTestEnv.py
+
+discord.log
+Waifus.txt
