@@ -97,9 +97,11 @@ async def on_slash_command_error(
             await inter.send(responder.getResponse('ERROR.ARGUMENT'),ephemeral=True)
         else:
             await inter.send(responder.getResponse('ERROR.GENERIC'),ephemeral=True)
-    except Exception:
-        #last ditch effort to get some info to the log
+    except Exception as err2:
+        #last ditch effort to get some info to the log and user
         logger.critical(err)
+        logger.critical(err2)
+        await inter.send('Something has gone Very Wrong. Please message the devs.')
 
 # Checks
 def is_not_me(inter:ApplicationCommandInteraction):
@@ -381,6 +383,7 @@ class PollCheckCog(commands.Cog):
 class StorageCog(commands.Cog):
     def __init__(self,bot:commands.Bot):
         self.bot=bot
+        self.loadFiles.start()
         self.storeFiles.start()
         self.storeDatabase.start()
 
@@ -399,22 +402,24 @@ class StorageCog(commands.Cog):
         for waifuImage in glob.glob('*/*/*.qoi',root_dir=images.POLL_FOLDER):
             waifuData=waifuImage.split('/')
             imagePath=os.path.join(images.POLL_FOLDER,waifuImage)
-            database.storeWaifuFile(waifuData[1],waifuData[0],imagePath)
+            database.storeWaifuFile(waifuData[1],waifuData[0],int(waifuData[2].replace('.qoi','')))
 
     @storeDatabase.before_loop
     @storeFiles.before_loop
     async def waitForLoaded(self):
         await self.bot.wait_until_ready()
 
+    @tasks.loop(hours=6)
     async def loadFiles(self):
         logger.info('Fetching from Database to File System')
         allWaifus=database.getAllWaifus()
         for waifu in allWaifus:
             name=waifu[0]
             source=waifu[1]
-            waifuImages = database.loadWaifu(name,source)
-            for waifuImage in waifuImages:
-                images.saveRawPollImage(waifuImage,hash(str(waifuImage)),images.sourceNameFolder(name,source))
+            waifuHashes = database.getWaifuHashes(name,source)
+            for waifuHash in waifuHashes:
+                waifuImage=database.loadWaifu(waifuHash)
+                images.saveRawPollImage(waifuImage,waifuHash,images.sourceNameFolder(name,source))
         allGuilds=database.getAllGuilds()
         for guildId in allGuilds:
             database.getGuildPickle(guildId).save()

@@ -74,18 +74,22 @@ def storeGuildPickle(guild:Server):
     pickle_bytes = pickle.dumps(guild)
     doCommand(cmdString,guild.identity,db.Binary(pickle_bytes))
 
-def storeWaifu(name:str,source:str,image):
+def storeWaifu(name:str,source:str,image,imageHash:int):
     cmdString = "INSERT INTO waifus (name,source,data,hash) VALUES ('{0}','{1}',{2},{3}) ON CONFLICT DO NOTHING"
     data = qoi.encode(image)
-    doCommand(cmdString,name,source,db.Binary(data),hash(data))
+    doCommand(cmdString,name,source,db.Binary(data),imageHash)
 
 def storeWaifuFile(name:str,source:str,imagePath:str):
     storeWaifu(name,source,qoi.read(imagePath))
 
-def loadWaifu(name:str,source:str):
-    cmdString = "SELECT data FROM waifus WHERE name = '{0}' AND source = '{1}'"
-    images = doCommandReturnAll(cmdString,name,source)
+def loadWaifu(hash:int):
+    cmdString = "SELECT data FROM waifus WHERE hash = '{0}'"
+    images = doCommandReturnAll(cmdString,hash)
     return [qoi.decode(image.tobytes()) for image in images]
+
+def getWaifuHashes(name:str,source:str):
+    cmdString = "SELECT hash FROM waifus WHERE name = '{0}' AND source = '{1}'"
+    return doCommandReturnAll(cmdString,name,source)
 
 def getAllWaifus():
     cmdString = "SELECT (name,source) FROM waifus"
