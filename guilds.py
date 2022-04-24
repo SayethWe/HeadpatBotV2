@@ -8,6 +8,8 @@ from headpatExceptions import WaifuDNEError,WaifuConflictError
 servers=list()
 
 SAVE_FOLDER = os.path.join('guilds')
+if not os.path.exists(SAVE_FOLDER):
+    os.makedirs(SAVE_FOLDER)
 logger = logging.getLogger(os.environ['LOGGER_NAME'])
 
 class Server:
@@ -59,8 +61,6 @@ class Server:
 
     def save(self):
         filePath=os.path.join(SAVE_FOLDER,f'{self.identity}.p')
-        if not os.path.exists(filePath):
-            os.makedirs(filePath)
         with open(filePath,'wb') as saveFile:
             pickle.dump(self,saveFile)
 
