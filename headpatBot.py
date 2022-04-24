@@ -114,7 +114,7 @@ async def headpat(
         image=images.loadHeadpatImage()
         imageBytes=images.imageToBytes(image)
         attachment = File(imageBytes, filename = 'headpat.png')
-        await inter.send(responder.getResponse('HEADPAT.PASS'),file=attachment)=
+        await inter.send(responder.getResponse('HEADPAT.PASS'),file=attachment)
 
 ## Option Commands
 @bot.slash_command(
