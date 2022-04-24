@@ -40,7 +40,7 @@ async def source_autocomplete(
     input:str
 ):
     raw_list = glob.glob('*/*/',root_dir=images.POLL_FOLDER)
-    valid = sorted([source.split('/')[0] for source in raw_list if input.title() in source])
+    valid = sorted(set([source.split('/')[0] for source in raw_list if input.title() in source]))
     return valid[:25] #discord can take 25 options
 
 async def name_autocomplete(
@@ -48,7 +48,7 @@ async def name_autocomplete(
     input:str
 ):
     raw_list = glob.glob('*/*/',root_dir=images.POLL_FOLDER)
-    valid = sorted([source.split('/')[1] for source in raw_list if input.title() in source])
+    valid = sorted(set([source.split('/')[1] for source in raw_list if input.title() in source]))
     return valid[:25]
 
 @dataclass
@@ -75,26 +75,29 @@ async def on_ready(): #events to fire on a sucessful reconnection
         except (UnpicklingError, TypeError):
             servers[guild.id]=guilds.Server.load(guild.id)
         logger.info(f"loading server {guild.name} with id {guild.id}")
-    #also need to make sure waifus are in system from database
 
 @bot.event
 async def on_disconnect(): #events to fire when closing
     storageCog = bot.get_cog('StorageCog')
-    storageCog.storeFiles()
-    storageCog.storeDatabase()
+    await storageCog.storeFiles()
+    await storageCog.storeDatabase()
 
 @bot.event
 async def on_slash_command_error(
     inter:ApplicationCommandInteraction,
     err:commands.CommandError
 ):
-    logger.error(f'Slash Command Error from {inter.guild.name}|{inter.channel.name}: {err}')
-    if isinstance(err,commands.CheckFailure):
-        await inter.send(responder.getResponse('ERROR.NOT_PERMITTED'),ephemeral=True)
-    elif isinstance(err,commands.MissingRequiredArgument):
-        await inter.send(responder.getResponse('ERROR.ARGUMENT'),ephemeral=True)
-    else:
-        await inter.send(responder.getResponse('ERROR.GENERIC'),ephemeral=True)
+    try:
+        logger.error(f'Slash Command Error from {inter.guild.name}|{inter.channel.name}: {err}')
+        if isinstance(err,commands.CheckFailure):
+            await inter.send(responder.getResponse('ERROR.NOT_PERMITTED'),ephemeral=True)
+        elif isinstance(err,commands.MissingRequiredArgument):
+            await inter.send(responder.getResponse('ERROR.ARGUMENT'),ephemeral=True)
+        else:
+            await inter.send(responder.getResponse('ERROR.GENERIC'),ephemeral=True)
+    except Exception:
+        #last ditch effort to get some info to the log
+        logger.critical(err)
 
 # Checks
 def is_not_me(inter:ApplicationCommandInteraction):
