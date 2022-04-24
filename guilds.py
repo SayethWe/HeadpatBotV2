@@ -58,7 +58,10 @@ class Server:
             self.waifus.remove(toRemove)
 
     def save(self):
-        with open(os.path.join(SAVE_FOLDER,f'{self.identity}.p'),'wb') as saveFile:
+        filePath=os.path.join(SAVE_FOLDER,f'{self.identity}.p')
+        if not os.path.exists(filePath):
+            os.makedirs(filePath)
+        with open(filePath,'wb') as saveFile:
             pickle.dump(self,saveFile)
 
     @staticmethod

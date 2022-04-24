@@ -365,6 +365,7 @@ class StorageCog(commands.Cog):
             server.save()
 
     @tasks.loop(hours=2)
+    @storeFiles.after_loop
     async def storeDatabase(self):
         logger.info('Saving to database')
         for server in servers.values():
