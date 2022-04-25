@@ -1,5 +1,5 @@
 import os, sys, logging
-os.environ['LOGGER_NAME']='discord'
+os.environ['LOGGER_NAME']='disnake'
 
 logger = logging.getLogger(os.environ['LOGGER_NAME'])
 logger.setLevel(logging.DEBUG)
@@ -25,7 +25,7 @@ import images, responder, guilds, polls, approval, database, headpatExceptions
 import glob
 
 TOKEN=os.environ['DISCORD_TOKEN']
-intents = disnake.Intents.none()
+intents = disnake.Intents(guilds=True)
 
 bot=commands.Bot(
     intents=intents,
@@ -68,8 +68,6 @@ async def getWaifu(
 @bot.event
 async def on_ready(): #events to fire on a sucessful reconnection
     logger.info(f"Logging in as {bot.user}")
-    storageCog = bot.get_cog('StorageCog')
-    await storageCog.loadFiles()
     for guild in bot.guilds:
         try:
             servers[guild.id] = database.getGuildPickle(guild.id)
@@ -100,7 +98,7 @@ async def on_slash_command_error(
     except Exception as err2:
         #last ditch effort to get some info to the log and user
         logger.critical(err)
-        logger.critical(err2)
+        logger.critical(f'an error occured while handling previous error: {err2}')
         await inter.send('Something has gone Very Wrong. Please message the devs.')
 
 # Checks
@@ -295,7 +293,6 @@ async def start(
     inter:ApplicationCommandInteraction,
     autoClose:bool = commands.param(True,description="Whether to close this poll automatically based on Server options")
 ):
-    
     await inter.response.defer()
     pollGuild = servers[inter.guild.id]
     if len(pollGuild.polls)!=0: #other polls have run
@@ -402,7 +399,7 @@ class StorageCog(commands.Cog):
         for waifuImage in glob.glob('*/*/*.qoi',root_dir=images.POLL_FOLDER):
             waifuData=waifuImage.split('/')
             imagePath=os.path.join(images.POLL_FOLDER,waifuImage)
-            database.storeWaifuFile(waifuData[1],waifuData[0],int(waifuData[2].replace('.qoi','')))
+            database.storeWaifuFile(waifuData[1],waifuData[0],imagePath,int(waifuData[2].replace('.qoi','')))
 
     @storeDatabase.before_loop
     @storeFiles.before_loop

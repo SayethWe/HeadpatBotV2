@@ -79,13 +79,13 @@ def storeWaifu(name:str,source:str,image,imageHash:int):
     data = qoi.encode(image)
     doCommand(cmdString,name,source,db.Binary(data),imageHash)
 
-def storeWaifuFile(name:str,source:str,imagePath:str):
-    storeWaifu(name,source,qoi.read(imagePath))
+def storeWaifuFile(name:str,source:str,imagePath:str,imageHash:int):
+    storeWaifu(name,source,qoi.read(imagePath),imageHash)
 
-def loadWaifu(hash:int):
+def loadWaifu(imageHash:int):
     cmdString = "SELECT data FROM waifus WHERE hash = '{0}'"
-    images = doCommandReturnAll(cmdString,hash)
-    return [qoi.decode(image.tobytes()) for image in images]
+    image = doCommandReturn(cmdString,imageHash)
+    return qoi.decode(image.tobytes())
 
 def getWaifuHashes(name:str,source:str):
     cmdString = "SELECT hash FROM waifus WHERE name = '{0}' AND source = '{1}'"
