@@ -27,10 +27,17 @@ import glob
 TOKEN=os.environ['DISCORD_TOKEN']
 intents = disnake.Intents(guilds=True)
 
-bot=commands.Bot(
-    intents=intents,
-    help_command=commands.DefaultHelpCommand()
-)
+if 'TEST_ENV' in os.environ:
+    bot=commands.Bot(
+        intents=intents,
+        test_guilds=[741829543718944768],
+        help_command=commands.DefaultHelpCommand()
+    )
+else:
+     bot=commands.Bot(
+        intents=intents,
+        help_command=commands.DefaultHelpCommand()
+    )
 
 servers=dict[int,guilds.Server]()
 
@@ -99,7 +106,6 @@ async def on_slash_command_error(
         #last ditch effort to get some info to the log and user
         logger.critical(err)
         logger.critical(f'an error occured while handling previous error: {err2}')
-        await inter.send('Something has gone Very Wrong. Please message the devs.')
 
 # Checks
 def is_not_me(inter:ApplicationCommandInteraction):
