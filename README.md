@@ -20,7 +20,7 @@
 # Headpatbot
 
 A discord bot for headpats and rating waifus  
-V2.0.0 - slash command rewrite
+V2.1.0 - slash command rewrite
 
 [Add the bot to your server](https://discord.com/api/oauth2/authorize?client_id=807859649621524490&permissions=33792&scope=bot)  
 [Join the support server](https://discord.gg/yhQzBYqFZb)
@@ -84,6 +84,7 @@ Checks if the user has permission to attach files in the channel
 `scope`: how large to search
 - Local: Server Only, includes the ratings of the waifus from polls
 - Global: All Waifus.
+- NotInServer: A list of all waifus in the global set that are not in the server. Essentially `Global` minus `Local`. 
 
 ##### /waifu pull `name source`
 Add a waifu from the master database to your server's waifupolls. Newly added waifus are always initialized with a rating of 1

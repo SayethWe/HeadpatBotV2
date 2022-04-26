@@ -189,24 +189,33 @@ async def show(
 async def getList(
     inter:ApplicationCommandInteraction,
     scope:str=commands.Param(
-        choices=["Local","Global"],
+        choices=["Local","Global","NotInServer"],
         description="Whether to consider only this server (Local) or the master database (Global)"
     )
 ):
     reply = ""
     with open('Waifus.txt','w') as waifuList:
+        await inter.response.defer()
         if scope == "Global":
             count=0
             for waifuStr in glob.glob('*/*/',root_dir=images.POLL_FOLDER):
-                waifuData = waifuStr.split('/')
-                waifuList.write(f'{waifuData[1]} from {waifuData[0]}\n')
+                (source,name,*discard) = waifuStr.split('/')
+                waifuList.write(f'{name} from {source}\n')
                 count+=1
             reply = responder.getResponse('WAIFU.LIST.GLOBAL',count)
-        else:
+        elif scope == 'Local':
             waifus=servers[inter.guild.id].waifus
             reply = responder.getResponse('WAIFU.LIST.LOCAL',len(waifus))
             for waifu in waifus:
                 waifuList.write(f"{waifu}\n")
+        else:
+            count=0
+            for waifuStr in glob.glob('*/*/',root_dir=images.POLL_FOLDER):
+                (source,name,*discard) = waifuStr.split('/')
+                if not servers[inter.guild.id].getWaifuByNameSource(name,source):
+                    waifuList.write(f'{name} from {source}\n')
+                    count+=1
+            reply = responder.getResponse('WAIFU.LIST.DIFFERENCE',count)
     with open('Waifus.txt','rb') as waifuList:
         file = disnake.File(waifuList, filename='Waifus.txt')
         await inter.send(reply,file=file,ephemeral=True)

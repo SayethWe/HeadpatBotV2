@@ -178,10 +178,10 @@ class ConfirmButton(Button):
         super().__init__(style=ButtonStyle.green,label='confirm')
 
     async def callback(self, button_inter: MessageInteraction):
+        user=button_inter.author
         if user in self.poll.users or not self.poll.open:
             await button_inter.send(responder.getResponse('WAIFU.POLL.VOTE.CLOSED'),ephemeral=True)
             return
-        user=button_inter.author
         #TODO lock vote buttons by user, which cannot be done yet.
         self.poll.confirmVotes(user.id)
         print(f'{user} hit confirm')
