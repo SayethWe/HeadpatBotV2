@@ -8,7 +8,7 @@ import qoi
 POLL_FOLDER=os.path.join('img','waifu')
 HEADPAT_FOLDER=os.path.join('img','headpat')
 rng = default_rng()
-font = ImageFont.truetype("CothamSans.otf", size=20)
+font = ImageFont.truetype(os.path.join('data','Cotham',"CothamSans.otf"), size=20)
 
 def imageToBytes(image:Image.Image,filename:str='image'):
     bytes= io.BytesIO()

@@ -1,0 +1,3 @@
+[submodule "data/Cotham"]
+	path = data/Cotham
+	url = https://github.com/sebsan/Cotham.git
