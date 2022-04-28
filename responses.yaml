@@ -43,8 +43,11 @@ WAIFU: #waifu
     ASK: # 0-waifu name, 1-source name
       - approve {0} from {1}?
     ANNOUNCE: # 0-waifu name, 1-source name
-      - I am glad to announce that {0} from {1} is now available!
-      - Everyone, meet {0}, joining us from {1}
+      NEW:
+        - I am glad to announce that {0} from {1} is now available!
+        - Everyone, meet {0}, joining us from {1}
+      EXISTING:
+        - Another Picture for {1}'s {0} has been added
     APPROVE:
       - approved {0}
     DENY:
@@ -89,3 +92,5 @@ WAIFU: #waifu
       - There are {0} waifus in the global database
     LOCAL:
       - Found {0} Waifus in your Server
+    DIFFERENCE:
+      - Global database has {0} waifus that you don't.

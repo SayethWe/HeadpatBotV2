@@ -36,14 +36,17 @@ def loadHeadpatImage():
 def savePollImage(data:io.BytesIO, filename:str, subfolder:str):
     image = Image.open(data)
     array = np.array(image)
-    saveRawPollImage(array,filename,subfolder)
+    return saveRawPollImage(array,filename,subfolder)
 
 def saveRawPollImage(array,filename:str,subfolder:str):
+    prevExist = True
     folder=os.path.join(POLL_FOLDER,subfolder)
     if not os.path.exists(folder):
+        prevExist=False
         os.makedirs(folder)
     path = os.path.join(folder,f'{filename}.qoi')
     qoi.write(path,array)
+    return prevExist
 
 
 def loadPollImage(subfolder:str):

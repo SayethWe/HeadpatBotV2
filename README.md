@@ -145,7 +145,7 @@ However, any self-hosted bots should make themselves obvious as such.
 `DISCORD_TOKEN`: The logon token for the bot account
 `APPROVAL_CHANNEL`: Channel ID to get messages from the bot asking to approve suggested Waifus. Bot must have send permissions in this channel.
 `SHARE_CHANNEL`: Channel ID to send messages from the bot when a new waifu is approved. Bot must have send permissions in this channel.
-`DATABASE_URL`:Credentials link to a postgresql database for storing data. Theoretically optional when not using Heroku.
+`DATABASE_URL`:Credentials link to a postgresql database for storing data. Theoretically optional when not using Heroku. Not using it has not been tested since implemented.
 
 #### Launch File:
 Assuming The Environment Variables are set up, running `headpatbot.py` will start the bot and connect to discord automatically.

@@ -31,11 +31,14 @@ async def getWaifuApproval(bot: Bot, image: Attachment, name:str,source:str):
         #print('accept')
         lockButtons()
         imageBytes = BytesIO(await image.read())
-        images.savePollImage(imageBytes,hash(image),os.path.join(source,name))
+        existingWaifu = images.savePollImage(imageBytes,hash(image),os.path.join(source,name))
         announce=bot.get_channel(announce_channel)
         await button_inter.send(responder.getResponse('WAIFU.ADD.APPROVE',name))
         attachment = await image.to_file()
-        await announce.send(responder.getResponse('WAIFU.ADD.ANNOUNCE',name,source),file = attachment)
+        if existingWaifu:
+            await announce.send(responder.getResponse('WAIFU.ADD.ANNOUNCE.EXISTING',name,source),file = attachment)
+        else:
+            await announce.send(responder.getResponse('WAIFU.ADD.ANNOUNCE.NEW',name,source),file = attachment)
 
 
     async def edit_callback(button_inter):
