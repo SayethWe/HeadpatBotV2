@@ -20,7 +20,7 @@
 # Headpatbot
 
 A discord bot for headpats and rating waifus  
-V2.1.0 - slash command rewrite
+V4.0.1 - slash command rewrite for discord's new permissions system
 
 [Add the bot to your server](https://discord.com/api/oauth2/authorize?client_id=807859649621524490&permissions=33792&scope=bot)  
 [Join the support server](https://discord.gg/yhQzBYqFZb)
@@ -44,8 +44,6 @@ All commands are slash commands
 
 ##### /options `option value`
 Change your server options for polls
-
-Checks if the user has server Administrator Permissions
 
 `option`: selects which option to edit
 - PollWaifuCount: How Many Waifus to include in each poll.
@@ -79,41 +77,42 @@ Shows an image of a waifu in the database. If the waifu has multiple images, whi
 ##### /waifu getList `scope`
 get a list of all waifus available as a txt file
 
-Checks if the user has permission to attach files in the channel
-
 `scope`: how large to search
 - Local: Server Only, includes the ratings of the waifus from polls
 - Global: All Waifus.
 - NotInServer: A list of all waifus in the global set that are not in the server. Essentially `Global` minus `Local`. 
 
-##### /waifu pull `name source`
+### /manageWaifus
+command family for managing server waifus. seperate command group to support command permissioning
+
+`name` and `source` support autocomplete.  
+When Typing in a `name` field, typing a source will suggest waifus from that source.  
+When typing in a `source` field, typing a name will suggest sources that have waifus with that name
+
+`name`: The waifu's name
+
+`source`: the media from where the waifu originates. Series names preferred
+
+##### /manageWaifus pull `name source`
 Add a waifu from the master database to your server's waifupolls. Newly added waifus are always initialized with a rating of 1
 
-Checks if the user can manage messages in the guild
-
-##### /waifu remove `name source`
+##### /manageWaifus remove `name source`
 remove a waifu from your server
 
-Checks if the user can manage messages in the guild
-
-##### /waifu pullCSV `csv`
+##### /manageWaifus pullCSV `csv`
 Pull multiple waifus simulatenously using a csv file
-
-Checks if the user can manage messages in the guild
 
 `csv`: A comma-seperated-values file, where each line contains a (`name`,`source`) pair in the first two columns. Data in other columns will be ignored.
 
-#### /waifu poll
+#### /poll
 Family of poll-related commands
 
-All Commands in this family check is the user is a server administrator
-
-##### /waifu poll start `autoclose`
+##### /poll start `autoclose`
 Begins a waifu poll. Posts an image collage of selected waifus, and creates buttons for approval-based voting.
 
 `autoclose`:Whether to use server options to check and automatically close the poll after a mimnimum time and number of voters, or a maximum time.
 
-##### /waifu poll end
+##### /poll end
 Manually end the most recent poll and calculate results
 
 ## Todo
