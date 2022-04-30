@@ -1,4 +1,4 @@
-import re
+import os
 import yaml
 from numpy.random import default_rng
 from glom import glom
@@ -6,7 +6,7 @@ import logging
 
 logger = logging.getLogger('discord')
 
-with open("responses.yaml","r") as file:
+with open(os.path.join("bot","responses.yaml"),"r") as file:
     try:
         responses = yaml.safe_load(file)
     except yaml.YAMLError as err:

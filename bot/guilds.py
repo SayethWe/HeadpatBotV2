@@ -1,8 +1,8 @@
 from enum import Enum
 import os, logging
-import images
+import bot.images as images
 import pickle
-from polls import Poll, Waifu
+from bot.polls import Poll, Waifu
 from headpatExceptions import WaifuDNEError,WaifuConflictError
 
 servers=list()
