@@ -213,8 +213,12 @@ async def getList(
     with open('Waifus.txt','rb') as waifuList:
         file = disnake.File(waifuList, filename='Waifus.txt')
         await inter.send(reply,file=file,ephemeral=True)
-    
-@waifu.sub_command(
+
+@bot.slash_command()
+async def manageWaifus(inter:ApplicationCommandInteraction):
+    pass
+
+@manageWaifus.sub_command(
     description = "add a waifu to future polls on this server"
 )
 async def pull(
@@ -232,7 +236,7 @@ async def pull(
         reply=responder.getResponse('WAIFU.ERROR.DNE',name,source)
     await inter.send(reply)
 
-@waifu.sub_command(
+@manageWaifus.sub_command(
     description="remove a waifu from further polls on this server"
 )
 async def remove(
@@ -248,7 +252,7 @@ async def remove(
         reply=responder.getResponse('WAIFU.ERROR.DNE',name,source)
     await inter.send(reply)
 
-@waifu.sub_command(
+@manageWaifus.sub_command(
     description="add a whole list of waifus defined in a CSV to your server"
 )
 async def pullCSV(
@@ -287,7 +291,7 @@ async def pullCSV(
 
 
 ### Poll Commands
-@waifu.sub_command_group()
+@bot.slash_command()
 async def poll(inter:ApplicationCommandInteraction):
     pass
 
