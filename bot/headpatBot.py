@@ -96,7 +96,7 @@ async def on_slash_command_error(
 ):
     try:
         logger.error(f'Slash Command Error from {inter.guild.name}|{inter.channel.name}: {err}')
-        if isinstance(err,commands.CheckFailure):
+        if isinstance(err,commands.CheckFailure): #should never run now, but keep in just in case.
             await inter.send(responder.getResponse('ERROR.NOT_PERMITTED'),ephemeral=True)
         elif isinstance(err,commands.MissingRequiredArgument):
             await inter.send(responder.getResponse('ERROR.ARGUMENT'),ephemeral=True)
@@ -106,10 +106,6 @@ async def on_slash_command_error(
         #last ditch effort to get some info to the log and user
         logger.critical(err)
         logger.critical(f'an error occured while handling previous error: {err2}')
-
-# Checks
-def is_not_me(inter:ApplicationCommandInteraction):
-    return inter.author.id != 132650983011385347
 
 ### help command TODO
 
@@ -131,7 +127,6 @@ async def headpat(
 @bot.slash_command(
     description="set server options"
 )
-@commands.check(commands.has_guild_permissions(administrator=True))
 async def options(
     inter:ApplicationCommandInteraction,
     setting:guilds.Server.ServerOption=commands.Param(description="option to set"),
@@ -185,7 +180,6 @@ async def show(
 @waifu.sub_command(
     description="get a list of waifus, either in this server, or available for pulls"
 )
-@commands.check(commands.has_permissions(attach_files=True))
 async def getList(
     inter:ApplicationCommandInteraction,
     scope:str=commands.Param(
@@ -223,7 +217,6 @@ async def getList(
 @waifu.sub_command(
     description = "add a waifu to future polls on this server"
 )
-@commands.check(commands.has_guild_permissions(manage_messages=True))
 async def pull(
     inter:ApplicationCommandInteraction,
     waifuData:WaifuData
@@ -242,7 +235,6 @@ async def pull(
 @waifu.sub_command(
     description="remove a waifu from further polls on this server"
 )
-@commands.check(commands.has_guild_permissions(manage_messages=True))
 async def remove(
     inter:ApplicationCommandInteraction,
     waifuData:WaifuData
@@ -259,7 +251,6 @@ async def remove(
 @waifu.sub_command(
     description="add a whole list of waifus defined in a CSV to your server"
 )
-@commands.check(commands.has_guild_permissions(manage_messages=True))
 async def pullCSV(
     inter:ApplicationCommandInteraction,
     csv:disnake.Attachment, 
@@ -297,7 +288,6 @@ async def pullCSV(
 
 ### Poll Commands
 @waifu.sub_command_group()
-@commands.check(commands.has_guild_permissions(administrator=True))
 async def poll(inter:ApplicationCommandInteraction):
     pass
 
