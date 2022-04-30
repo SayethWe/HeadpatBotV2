@@ -12,6 +12,9 @@ ERROR:
     - That command was not for you to use.
   ARGUMENT:
     - You'll have to tell me more than that before I can do anything
+HELP:
+  - Here's a list of everything I can do.
+  - I'm baring my soul here. Don't abuse it.
 OPTION:
   GET:
   - value of {0} is {1}

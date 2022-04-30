@@ -20,10 +20,16 @@
 # Headpatbot
 
 A discord bot for headpats and rating waifus  
-V4.0.1 - slash command rewrite for discord's new permissions system
+1.x.x - old discord.py implementation
+2.x.x - slash commands
+3.x.x - Directory Refactoring
+4.x.x - Permissioning
+4.1.x - Help Command
+
 
 [Add the bot to your server](https://discord.com/api/oauth2/authorize?client_id=807859649621524490&permissions=33792&scope=bot)  
 [Join the support server](https://discord.gg/yhQzBYqFZb)
+[View the Source](https://github.com/SayethWe/HeadpatBotV2)
 
 ## Permissions
 #### Tested, Required
@@ -36,6 +42,10 @@ Add Reactions
 
 ## Features/ Commands
 All commands are slash commands
+
+#### /help
+- sends the readme file (this file) for command information
+
 ##### /headpat `qty`
 - receive random headpat images
 - headpat images are added directly to the bot files. To request one be added, contact the author
@@ -104,7 +114,7 @@ Pull multiple waifus simulatenously using a csv file
 
 `csv`: A comma-seperated-values file, where each line contains a (`name`,`source`) pair in the first two columns. Data in other columns will be ignored.
 
-#### /poll
+### /poll
 Family of poll-related commands
 
 ##### /poll start `autoclose`
@@ -119,7 +129,7 @@ Manually end the most recent poll and calculate results
 See Todo.md, but high level:
 
 Gacha Game
-More Options, including command permissions
+More Options
 More Responses
 
 Contributions welcome, feel free to make pull requests.

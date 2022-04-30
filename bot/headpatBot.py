@@ -108,6 +108,13 @@ async def on_slash_command_error(
         logger.critical(f'an error occured while handling previous error: {err2}')
 
 ### help command TODO
+@bot.slash_command(
+    description="Get command and bot documentation"
+)
+async def help(
+    inter: ApplicationCommandInteraction
+):
+    await inter.send(responder.getResponse('HELP'),file=File("README.md"),ephemeral=True)
 
 # slash commands
 @bot.slash_command(
