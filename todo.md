@@ -66,7 +66,7 @@ _Future Feature_
 - Automation (optional)
     - [ ] auto-start
         - time since poll ended
-    - [x] auto-end
+    - [ ] auto-end
         - Minimum time with threshold
             - Check Frequency
         - Maximum Time
@@ -78,8 +78,8 @@ _Future Feature_
     - [x] update waifu ratings
 - [ ] alert participants
 - [ ] fancy graphics
-    - [ ] Vote histogram
-    - [ ] Expected performance vs actual performance
+    - [x] Vote histogram
+    - [x] Expected performance vs actual performance
     - [ ] rating changes
 
 ---

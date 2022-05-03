@@ -23,6 +23,9 @@ from disnake import ApplicationCommandInteraction, File
 from disnake.ext import tasks, commands
 import images, responder, guilds, polls, approval, database, headpatExceptions
 import glob
+import matplotlib.pyplot  as plt
+from io import BytesIO
+import traceback
 
 TOKEN=os.environ['DISCORD_TOKEN']
 intents = disnake.Intents(guilds=True)
@@ -96,6 +99,7 @@ async def on_slash_command_error(
 ):
     try:
         logger.error(f'Slash Command Error from {inter.guild.name}|{inter.channel.name}: {err}')
+        logger.error(traceback.format_exc(err))
         if isinstance(err,commands.CheckFailure): #should never run now, but keep in just in case.
             await inter.send(responder.getResponse('ERROR.NOT_PERMITTED'),ephemeral=True)
         elif isinstance(err,commands.MissingRequiredArgument):
@@ -105,6 +109,7 @@ async def on_slash_command_error(
     except Exception as err2:
         #last ditch effort to get some info to the log and user
         logger.critical(err)
+        logger.critical(traceback.format_exc(err))
         logger.critical(f'an error occured while handling previous error: {err2}')
 
 ### help command TODO
@@ -307,7 +312,7 @@ async def poll(inter:ApplicationCommandInteraction):
 )
 async def start(
     inter:ApplicationCommandInteraction,
-    autoClose:bool = commands.param(True,description="Whether to close this poll automatically based on Server options")
+    #autoClose:bool = commands.param(True,description="Whether to close this poll automatically based on Server options")
 ):
     await inter.response.defer()
     pollGuild = servers[inter.guild.id]
@@ -316,14 +321,13 @@ async def start(
             #TODO: include link to message
             await inter.send(responder.getResponse('WAIFU.POLL.EXISTS'),ephemeral=True)
             return
-    message = await inter.original_message()
-    newPoll=polls.Poll(message.id,pollGuild.options[guilds.Server.ServerOption.PollWaifuCount.value])
+    newPoll=polls.Poll(inter.channel_id,pollGuild.options[guilds.Server.ServerOption.PollWaifuCount.value])
     pollGuild.addPoll(newPoll)
     # to run a poll:
     # 1 select options
     try:
         (names, sources) = newPoll.startPoll(pollGuild.waifus)
-    except headpatExceptions.InsufficientOptionsError as err:
+    except headpatExceptions.InsufficientOptionsError:
         await inter.send(responder.getResponse('WAIFU.POLL.INSUFFICIENT'),ephemeral=True)
         pollGuild.removePoll(newPoll)
         return
@@ -336,17 +340,14 @@ async def start(
     # 4 post image and buttons
     reply = responder.getResponse('WAIFU.POLL.OPEN')
     await inter.send(content=reply,file=attachment,view=view)
-    # 5 accept input from buttons
-    # handled in pollView
     # 6 poll end
-    if (autoClose):
-        delay = pollGuild.options[guilds.Server.ServerOption.PollParticipationCheckStartHours.value]
-        delta=pollGuild.options[guilds.Server.ServerOption.PollParticipationCheckDeltaHours.value]
-        end = pollGuild.options[guilds.Server.ServerOption.PollEndHours.value]
-        threshold = pollGuild.options[guilds.Server.ServerOption.PollParticipationCheckCount.value]
-        pollCog = PollCheckCog(delay,delta,end,newPoll,threshold)
-        pollCog.checkPoll.start()
-    # 7 update waifus
+    #if (autoClose):
+    #    delay = pollGuild.options[guilds.Server.ServerOption.PollParticipationCheckStartHours.value]
+    #    delta=pollGuild.options[guilds.Server.ServerOption.PollParticipationCheckDeltaHours.value]
+    #    end = pollGuild.options[guilds.Server.ServerOption.PollEndHours.value]
+    #    threshold = pollGuild.options[guilds.Server.ServerOption.PollParticipationCheckCount.value]
+    #    pollCog = PollCheckCog(delay,delta,end,newPoll,threshold)
+    #    pollCog.checkPoll.start()
 
 @poll.sub_command(
     description="close a running waifu poll and calculate results"
@@ -359,15 +360,42 @@ async def close(
     if len(pollGuild.polls)!=0: #other polls have run
         poll = pollGuild.polls[-1]
     else:
-        await inter.send(responder.getResponse('WAIFU.POLL.NONE'))
+        await inter.send(responder.getResponse('WAIFU.POLL.NONE'),ephemeral=True)
         return
     if(poll.open):
         poll.endPoll(bot)
-        await inter.send(responder.getResponse('WAIFU.POLL.CLOSE'))
+        #create images
+        await inter.send(responder.getResponse('WAIFU.POLL.CLOSE') )
+        await results(inter,-1)
     else:
-        await inter.send(responder.getResponse('WAIFU.POLL.NONE'))
+        await inter.send(responder.getResponse('WAIFU.POLL.NONE'),ephemeral=True)
 
-class PollCheckCog(commands.Cog):
+@poll.sub_command(
+    description="Get results from a poll"
+)
+async def results(
+    inter:ApplicationCommandInteraction,
+    pollNum:int = commands.Param(-1,le=0,description="Which poll to see results for")
+):
+    pollGuild = servers[inter.guild.id]
+    logger.debug(f'Getting results for {inter.guild.id} poll {pollNum}')
+    try:
+        poll = pollGuild.polls[pollNum]
+    except Exception: # wrong index error
+        return ##TODO: await
+    fig,axs = plt.subplots(1,3,squeeze=False)
+    poll.voteHistogram(axs[0,0])
+    poll.performancePlot(axs[0,1])
+    pollGuild.ratingsPlot(axs[0,2])
+    fig.suptitle("Waifu poll results")
+    fig.set_tight_layout(True)
+    figBytes= BytesIO()
+    fig.savefig(figBytes)
+    plt.close(fig)
+    figBytes.seek(0)
+    await inter.send(responder.getResponse('WAIFU.POLL.RESULTS'),file=File(figBytes,filename="results.png"))
+
+class PollCheck:
     def __init__(self,delay:int,delta:int,end:int,poll:polls.Poll,threshold:int):
         self.delay=delay
         self.delta=delta

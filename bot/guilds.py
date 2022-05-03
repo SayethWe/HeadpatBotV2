@@ -4,6 +4,7 @@ import images
 import pickle
 from polls import Poll, Waifu
 from headpatExceptions import WaifuDNEError,WaifuConflictError
+import matplotlib.pyplot as plt
 
 servers=list()
 
@@ -93,6 +94,11 @@ class Server:
 
     def getWaifuRatings(self):
         return list(map(lambda waifu: waifu.rating,self.waifus))
+
+    def ratingsPlot(self,ax:plt.Axes):
+        ax.violinplot(self.getWaifuRatings())
+        ax.set_ylabel("Waifu Rating")
+        ax.set_title("Waifu Ratings")
 
     def __repr__(self):
         return f'name:{self.__class__.__name__},guildId={self.identity}\nwaifus={self.waifus}\npolls={self.polls}\noptions={self.options}'

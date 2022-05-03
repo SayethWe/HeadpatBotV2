@@ -24,7 +24,7 @@ A discord bot for headpats and rating waifus
 2.x.x - slash commands
 3.x.x - Directory Refactoring
 4.x.x - Permissioning
-4.1.x - Help Command
+4.2.x - Poll Graphs, Removal of autoclose
 
 
 [Add the bot to your server](https://discord.com/api/oauth2/authorize?client_id=807859649621524490&permissions=33792&scope=bot)  
@@ -57,11 +57,11 @@ Change your server options for polls
 
 `option`: selects which option to edit
 - PollWaifuCount: How Many Waifus to include in each poll.
-- PollParticipationCheckStartHours: Minimum length of time for a poll to run before starting atuo-close checks.
-- PollParticipationCheckDeltaHours: How often to perform an auto-close check after starting.
-- PollEndHours: How long to wait since a poll has started before forcibly closing it.
-- PollParticipationCheckCount: Number of people who must have confirmed their vote when an auto-close check runs to close the poll.
-- PollWaifuImageSizePixels: How large to make each waifu image in a poll. Unused
+- PollParticipationCheckStartHours: Minimum length of time for a poll to run before starting auto-close checks. Unused
+- PollParticipationCheckDeltaHours: How often to perform an auto-close check after starting. Unused
+- PollEndHours: How long to wait since a poll has started before forcibly closing it. Unused
+- PollParticipationCheckCount: Number of people who must have confirmed their vote when an auto-close check runs to close the poll. Unused
+- PollWaifuImageSizePixels: How large to make each waifu image in a poll. Unimplemented
 - PollStartNextGapHours: How long to wait after a poll has ended to start the next one. Unused
 
 `value`: value to set the selected option to
@@ -117,13 +117,16 @@ Pull multiple waifus simulatenously using a csv file
 ### /poll
 Family of poll-related commands
 
-##### /poll start `autoclose`
+##### /poll start
 Begins a waifu poll. Posts an image collage of selected waifus, and creates buttons for approval-based voting.
-
-`autoclose`:Whether to use server options to check and automatically close the poll after a mimnimum time and number of voters, or a maximum time.
 
 ##### /poll end
 Manually end the most recent poll and calculate results
+
+##### /poll result `pollNum`
+Show the results graphs from any poll run after 4.2.0
+
+`pollNum` : index of the poll to get, where 0 is the first poll in the server. Defaults to the most recent poll.
 
 ## Todo
 See Todo.md, but high level:
@@ -139,7 +142,7 @@ Contributions welcome, feel free to make pull requests.
 Licensed under the GPLv3.0 license. See LICENSE file.
 
 ## Credits
-LordOfEnnui#8710: V1 Implementation and methodology consultation
+LordOfEnnui#8710: V0 reddit bot, V1 Implementation and methodology consultation. 
 Sayeth_We#0663: V1 Implementation, Equation Design, V2 Rewrite
 
 ## Self hosting

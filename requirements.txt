@@ -1,5 +1,6 @@
 disnake~=2.4.0
 numpy>=1.22.0
+matplotlib>=3.5.0
 qoi>=0.0.9
 pillow>=9.1.0
 pyyaml>=6.0

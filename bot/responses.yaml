@@ -90,6 +90,8 @@ WAIFU: #waifu
         - That poll is no longer taking votes
     INSUFFICIENT:
       - Not enough waifus avaialable! Add more and try again.
+    RESULTS:
+      - Here are the results
   LIST:
     GLOBAL:
       - There are {0} waifus in the global database

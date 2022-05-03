@@ -1,6 +1,5 @@
 import os, io, glob
 from PIL import Image, ImageOps, ImageDraw, ImageFont
-from disnake import File
 import numpy as np
 from numpy.random import default_rng
 import qoi

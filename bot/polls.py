@@ -1,4 +1,5 @@
 import numpy as np
+import matplotlib.pyplot  as plt
 from numpy.random import default_rng
 from disnake.ui import Button, View
 from disnake import ButtonStyle
@@ -29,6 +30,7 @@ class Poll():
         self.open = True
         self.users=list[int]()
         self.waifus=list[Waifu]()
+        self.ratings=list[int]()
         self.votes=np.zeros(shape=size,dtype=np.int64)
         self.size = size
         
@@ -52,25 +54,21 @@ class Poll():
             choice = waifusIn[index]
             names.append(choice.name)
             sources.append(choice.source)
+            self.ratings.append(choice.rating)
             self.waifus.append(choice)
         return (names,sources)
         
-    def endPoll(self,bot:Bot):
+    def endPoll(self,bot:Bot): #TODO: maybe take in an inter from commandclose, but if none, do autoclose stuff?
         self.open=False
-        try:
-            components = bot.get_message(self.messageId).components
-            for button in components:
-                button.disabled = True
-        except (Exception):
-            pass
+        #TODO: Figure out how to get the original message, and edit it. get_message returned none, and no equivalent fetch seems to exist.
+        #fetching a message may actually require the see_messages permissions - is this worth askign for another perm?
         #update waifus
         if not self.users:
             # no one participated
             return
-        ratings = [waifu.rating for waifu in self.waifus]
-        ratings += Poll.ratingChanges(ratings,self.votes)
+        ratingChanges = self.ratingChanges()
         for i in range(self.size):
-            self.waifus[i].rating = ratings[i]
+            self.waifus[i].updateRating(ratingChanges[i])
 
     def countVotes(self):
         return len(self.users)
@@ -82,6 +80,24 @@ class Poll():
             view.add_item(button)
         view.add_item(ConfirmButton(self))
         return view
+
+    def performancePlot(self,ax:plt.Axes):
+        expectation=Poll.cubicSigmoid(self.ratings)
+        actual=Poll.cubicSigmoid(self.votes)
+        ax.plot(expectation,actual,'r*')
+        ax.plot([-1,1],[-1,1],'b:')
+        ax.set_xlim([-1,1])
+        ax.set_xlabel("Expected Performance")
+        ax.set_ylim([-1,1])
+        ax.set_ylabel("Actual Performance")
+        ax.set_aspect('equal')
+        ax.set_title("Performance")
+
+    def voteHistogram(self,ax:plt.Axes):
+        ax.hist(self.votes,bins=range(0,len(self.users)+2),align='left')
+        ax.set_xlabel("Number of Votes")
+        ax.set_ylabel("Occurence Count")
+        ax.set_title("Votes by Waifu")
 
     @staticmethod
     def selectPoll(pollSize:int,ratings:np.ndarray[int, np.dtype[np.int64]]):
@@ -107,10 +123,12 @@ class Poll():
         Poll.rng.shuffle(selected) #shuffle the result so we don't always get consistent placement of similar options
         return selected
 
-    @staticmethod
-    def ratingChanges(prevRatings,votes):
-        expectation = Poll.cubicSigmoid(prevRatings)
-        actual = Poll.cubicSigmoid(votes)
+    def ratingChanges(self):
+        if self.open:
+            #votes are volatile. return 0
+            return np.zeros(shape=self.size)
+        expectation = Poll.cubicSigmoid(self.ratings)
+        actual=Poll.cubicSigmoid(self.votes)
         diff=actual-expectation
         return np.around(diff*diff*diff)
 
@@ -184,15 +202,4 @@ class ConfirmButton(Button):
             return
         #TODO lock vote buttons by user, which cannot be done yet.
         self.poll.confirmVotes(user.id)
-        print(f'{user} hit confirm')
         await button_inter.send(responder.getResponse('WAIFU.POLL.VOTE.CONFIRM'))
-
-#Test Code
-#options=Poll.rng.integers(low=1,high=100,size=144)
-#selectionIndices=Poll.selectPoll(8,options)
-#selection=options[selectionIndices]
-#ratings=Poll.cubicSigmoid(selection)
-#print(options)
-#print(selectionIndices)
-#print(selection)
-#print(ratings)
