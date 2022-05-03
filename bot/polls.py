@@ -202,4 +202,4 @@ class ConfirmButton(Button):
             return
         #TODO lock vote buttons by user, which cannot be done yet.
         self.poll.confirmVotes(user.id)
-        await button_inter.send(responder.getResponse('WAIFU.POLL.VOTE.CONFIRM'))
+        await button_inter.send(responder.getResponse('WAIFU.POLL.VOTE.CONFIRM',user.name))

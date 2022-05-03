@@ -24,7 +24,7 @@ A discord bot for headpats and rating waifus
 2.x.x - slash commands
 3.x.x - Directory Refactoring
 4.x.x - Permissioning
-4.2.x - Poll Graphs, Removal of autoclose
+4.3.x - Voting Completion Announcement
 
 
 [Add the bot to your server](https://discord.com/api/oauth2/authorize?client_id=807859649621524490&permissions=33792&scope=bot)  

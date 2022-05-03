@@ -85,7 +85,7 @@ WAIFU: #waifu
       REMOVE:
         - your vote for {0} is gone. Pick better next time?
       CONFIRM:
-        - votes saved!
+        - '{0} has finished voting!'
       CLOSED:
         - That poll is no longer taking votes
     INSUFFICIENT:
