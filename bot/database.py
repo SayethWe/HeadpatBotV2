@@ -1,5 +1,5 @@
 from guilds import Server
-import psycopg2 as db
+import asyncpg as db
 import qoi
 import os, pickle
 
@@ -33,11 +33,9 @@ def doCommandReturn(command:str,*args):
     conn = db.connect(link)
     cur = conn.cursor()
     execStr = command.format(*args)
-    #print(execStr)
     cur.execute(execStr)
     conn.commit()
     result = cur.fetchone()[0]
-    cur.close()
     conn.close()
     return result
 
@@ -45,12 +43,7 @@ def doCommand(command:str,*args):
     if not enabled:
         return None
     conn = db.connect(link)
-    cur = conn.cursor()
-    execStr = command.format(*args)
-    #print(execStr)
-    cur.execute(execStr)
-    conn.commit()
-    cur.close()
+    conn.execute(command,*args)
     conn.close()
 
 def createTables():
