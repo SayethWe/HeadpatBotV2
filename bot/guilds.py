@@ -105,6 +105,7 @@ class Server:
 
     def addPoll(self,poll:Poll):
         self.polls.append(poll)
+        return len(self.polls)-1
 
     def removePoll(self,poll:Poll):
         self.polls.remove(poll)

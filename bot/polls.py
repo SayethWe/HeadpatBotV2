@@ -1,3 +1,4 @@
+import logging, os
 import numpy as np
 import matplotlib.pyplot  as plt
 from numpy.random import default_rng
@@ -8,6 +9,8 @@ from disnake import ButtonStyle, MessageInteraction
 from disnake.ext.commands import Bot
 from headpatExceptions import InsufficientOptionsError
 import responder
+
+logger = logging.getLogger(os.environ['LOGGER_NAME'])
 
 class Waifu():
     def __init__(self,name:str,source:str,rating:int):
@@ -32,6 +35,7 @@ class Poll():
         self.waifus=list[Waifu]()
         self.ratings=list[int]()
         self.votes=np.zeros(shape=size,dtype=np.int64)
+        self.voters=[list[int]() for _ in range(size)]
         self.size = size
         
     def addVote(self,index:int):
@@ -66,6 +70,12 @@ class Poll():
         if not self.users:
             # no one participated
             return
+        #for each list in voters
+        for i in range(self.size):
+            #remove any users who didn't confirm
+            self.voters[i]=set(self.users).intersection(self.voters[i])
+            #set votes to be the length
+            self.votes[i]=len(self.voters[i])
         ratingChanges = self.ratingChanges()
         for i in range(self.size):
             self.waifus[i].updateRating(ratingChanges[i])
@@ -80,6 +90,40 @@ class Poll():
             view.add_item(button)
         view.add_item(ConfirmButton(self))
         return view
+
+    def createPollButtons(self,pollInd:int,names:list[str],sources:list[str]):
+        buttons:list[Button]=[None]*(self.size+1)
+        for i in range(self.size):
+            buttons[i] = Button(style=ButtonStyle.blurple,label=f'{names[i]}|{sources[i]}',custom_id=f'poll|{self.messageId}|{pollInd}|{i}')
+        buttons[-1]=Button(style=ButtonStyle.green,label='Confirm',custom_id=f'poll|{self.messageId}|{pollInd}|Confirm')
+        return buttons
+
+    async def doVote(self,button_inter:MessageInteraction,voteInd:int):
+        user=button_inter.author.id
+        if user in self.users or not self.open: #poll won't take their vote
+            await button_inter.send(responder.getResponse('WAIFU.POLL.VOTE.CLOSED'),ephemeral=True)
+        elif user not in self.voters[voteInd]: #user hasn't voted for this - add vote
+            await button_inter.send(responder.getResponse('WAIFU.POLL.VOTE.ADD',self.waifus[voteInd].name),ephemeral=True)
+            self.voters[voteInd].append(user)
+            self.addVote(voteInd)
+        else: #user is cancelling a vote
+            await button_inter.send(responder.getResponse('WAIFU.POLL.VOTE.REMOVE',self.waifus[voteInd].name),ephemeral=True)
+            self.voters[voteInd].remove(user)
+            self.cancelVote(voteInd)
+
+    async def doConfirm(self,button_inter:MessageInteraction):
+        user=button_inter.author
+        if user in self.users or not self.open:
+            await button_inter.send(responder.getResponse('WAIFU.POLL.VOTE.CLOSED'),ephemeral=True)
+            return
+        #TODO lock vote buttons by user, which cannot be done yet.
+        self.confirmVotes(user.id)
+        try:
+            name = user.nick
+            assert name is not None
+        except:
+            name = user.name
+        await button_inter.send(responder.getResponse('WAIFU.POLL.VOTE.CONFIRM',name))
 
     def performancePlot(self,ax:plt.Axes):
         expectation=Poll.cubicSigmoid(self.ratings)

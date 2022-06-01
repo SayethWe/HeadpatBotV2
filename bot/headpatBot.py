@@ -112,6 +112,17 @@ async def on_slash_command_error(
         logger.critical(traceback.format_exc(err))
         logger.critical(f'an error occured while handling previous error: {err2}')
 
+@bot.listen("on_button_click")
+async def pollVoteHandler(inter:disnake.MessageInteraction):
+    data = inter.component.custom_id.split('|')
+    if data[0] != 'poll':
+        return
+    poll:polls.Poll = servers[int(data[1])].polls[int(data[2])]
+    if data[3] == 'Confirm':
+        await poll.doConfirm(inter)
+    else:
+        await poll.doVote(inter,int(data[3]))
+
 ### help command TODO
 @bot.slash_command(
     description="Get command and bot documentation"
@@ -122,6 +133,7 @@ async def help(
     await inter.send(responder.getResponse('HELP'),file=File("README.md"),ephemeral=True)
 
 # slash commands
+## Headpat
 @bot.slash_command(
     description = "get headpats, up to four at a time."
 )
@@ -321,8 +333,8 @@ async def start(
             #TODO: include link to message
             await inter.send(responder.getResponse('WAIFU.POLL.EXISTS'),ephemeral=True)
             return
-    newPoll=polls.Poll(inter.channel_id,pollGuild.options[guilds.Server.ServerOption.PollWaifuCount.value])
-    pollGuild.addPoll(newPoll)
+    newPoll=polls.Poll(inter.guild.id,pollGuild.options[guilds.Server.ServerOption.PollWaifuCount.value])
+    pollInd=pollGuild.addPoll(newPoll)
     # to run a poll:
     # 1 select options
     try:
@@ -336,10 +348,10 @@ async def start(
     imageBytes=images.imageToBytes(image)
     attachment = File(imageBytes, filename = 'poll.png')
     # 3 create vote buttons
-    view = newPoll.createPollView(names,sources)
+    buttons=newPoll.createPollButtons(pollInd,names,sources)
     # 4 post image and buttons
     reply = responder.getResponse('WAIFU.POLL.OPEN')
-    await inter.send(content=reply,file=attachment,view=view)
+    await inter.send(content=reply,file=attachment,components=buttons)
     # 6 poll end
     #if (autoClose):
     #    delay = pollGuild.options[guilds.Server.ServerOption.PollParticipationCheckStartHours.value]
@@ -375,7 +387,7 @@ async def close(
 )
 async def results(
     inter:ApplicationCommandInteraction,
-    pollNum:int = commands.Param(-1,le=0,description="Which poll to see results for")
+    pollNum:int = commands.Param(-1,ge=0,description="Which poll to see results for")
 ):
     pollGuild = servers[inter.guild.id]
     logger.debug(f'Getting results for {inter.guild.id} poll {pollNum}')

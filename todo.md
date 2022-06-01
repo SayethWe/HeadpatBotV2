@@ -60,6 +60,7 @@ _Future Feature_
 - [x] List Global Waifus
 - [x] **Prevent Poll from Running when not enough Waifus**
 - [ ] Use Server TileSize setting
+- [ ] Smarter Face detection
 
 ### Waifu Poll
 - [x] **start poll**
