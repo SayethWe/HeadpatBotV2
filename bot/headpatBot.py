@@ -25,7 +25,6 @@ import images, responder, guilds, polls, approval, database, headpatExceptions
 import glob
 import matplotlib.pyplot  as plt
 from io import BytesIO
-import traceback
 
 TOKEN=os.environ['DISCORD_TOKEN']
 intents = disnake.Intents(guilds=True)
@@ -98,8 +97,7 @@ async def on_slash_command_error(
     err:commands.CommandError
 ):
     try:
-        logger.error(f'Slash Command Error from {inter.guild.name}|{inter.channel.name}: {err}')
-        logger.error(traceback.format_exc(err))
+        logger.exception(f'Slash Command Error from {inter.guild.name}|{inter.channel.name}',stack_info=True,exc_info=err)
         if isinstance(err,commands.CheckFailure): #should never run now, but keep in just in case.
             await inter.send(responder.getResponse('ERROR.NOT_PERMITTED'),ephemeral=True)
         elif isinstance(err,commands.MissingRequiredArgument):
@@ -109,7 +107,6 @@ async def on_slash_command_error(
     except Exception as err2:
         #last ditch effort to get some info to the log and user
         logger.critical(err)
-        logger.critical(traceback.format_exc(err))
         logger.critical(f'an error occured while handling previous error: {err2}')
 
 @bot.listen("on_button_click")
