@@ -20,22 +20,23 @@
 # Headpatbot
 
 A discord bot for headpats and rating waifus  
-1.x.x - old discord.py implementation
-2.x.x - slash commands
-3.x.x - Directory Refactoring
-4.x.x - Permissioning
-4.3.x - Voting Completion Announcement
+1.x.x - old discord.py implementation  
+2.x.x - slash commands  
+3.x.x - Directory Refactoring  
+4.x.x - Permissioning  
+4.3.x - Voting Completion Announcement  
 
 
-[Add the bot to your server](https://discord.com/api/oauth2/authorize?client_id=807859649621524490&permissions=33792&scope=bot)  
-[Join the support server](https://discord.gg/yhQzBYqFZb)
+[Add the bot to your server](https://discord.com/oauth2/authorize?client_id=807859649621524490&permissions=33792&scope=applications.commands%20bot)  
+[Join the support server](https://discord.gg/yhQzBYqFZb)  
 [View the Source](https://github.com/SayethWe/HeadpatBotV2)
 
 ## Permissions
 #### Tested, Required
 Attach Files
 View Channel(s)
-#### Tested, not Required, Reccomended for safety
+Application Commands (Create Slash Commands in Server)
+#### Tested, not Required, Reccomended for safety with possible future features
 Send Messages
 #### Not Required, may be used in future
 Add Reactions
@@ -142,7 +143,7 @@ Contributions welcome, feel free to make pull requests.
 Licensed under the GPLv3.0 license. See LICENSE file.
 
 ## Credits
-LordOfEnnui#8710: V0 reddit bot, V1 Implementation and methodology consultation. 
+LordOfEnnui#8710: V0 reddit bot, V1 Implementation and methodology consultation.  
 Sayeth_We#0663: V1 Implementation, Equation Design, V2 Rewrite
 
 ## Self hosting
