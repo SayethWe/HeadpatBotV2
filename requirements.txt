@@ -7,3 +7,4 @@ pyyaml>=6.0
 glom>=22.1.0
 certifi>=2021.10.8
 psycopg2>=2.9.3
+discord-webhook-logging~=0.0.3

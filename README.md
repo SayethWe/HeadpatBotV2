@@ -24,7 +24,7 @@ A discord bot for headpats and rating waifus
 2.x.x - slash commands  
 3.x.x - Directory Refactoring  
 4.x.x - Permissioning  
-4.3.x - Voting Completion Announcement  
+4.4.x - Persistent Voting 
 
 
 [Add the bot to your server](https://discord.com/oauth2/authorize?client_id=807859649621524490&permissions=33792&scope=applications.commands%20bot)  
@@ -159,6 +159,7 @@ However, any self-hosted bots should make themselves obvious as such.
 `APPROVAL_CHANNEL`: Channel ID to get messages from the bot asking to approve suggested Waifus. Bot must have send permissions in this channel.
 `SHARE_CHANNEL`: Channel ID to send messages from the bot when a new waifu is approved. Bot must have send permissions in this channel.
 `DATABASE_URL`:Credentials link to a postgresql database for storing data. Theoretically optional when not using Heroku. Not using it has not been tested since implemented.
+`LOGS_HOOK`: A discord webhook to send Critical, Error, and Warning logs to. Optional.
 
 #### Launch File:
 Assuming The Environment Variables are set up, running `headpatbot.py` will start the bot and connect to discord automatically.

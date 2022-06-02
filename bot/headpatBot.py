@@ -1,4 +1,5 @@
 import os, sys, logging
+from discord_webhook_logging import DiscordWebhookHandler
 os.environ['LOGGER_NAME']='disnake'
 
 logger = logging.getLogger(os.environ['LOGGER_NAME'])
@@ -14,6 +15,11 @@ chandler = logging.StreamHandler(stream = sys.stdout)
 chandler.setFormatter(format)
 chandler.setLevel('INFO')
 logger.addHandler(chandler)
+
+if 'LOGS_HOOK' in os.environ:
+    whandler = DiscordWebhookHandler(webhook_url=os.environ['LOGS_HOOK'])
+    whandler.setLevel('WARNING')
+    logger.addHandler(whandler)
 
 import asyncio
 from dataclasses import dataclass
