@@ -33,6 +33,8 @@ async def getWaifuApproval(bot: Bot, image: Attachment, name:str,source:str):
         imageBytes = BytesIO(await image.read())
         existingWaifu = images.savePollImage(imageBytes,hash(image),os.path.join(source,name))
         announce=bot.get_channel(announce_channel)
+        if announce is None:
+            announce = bot.fetch_channel(announce_channel)
         await button_inter.send(responder.getResponse('WAIFU.ADD.APPROVE',name))
         attachment = await image.to_file()
         if existingWaifu:
