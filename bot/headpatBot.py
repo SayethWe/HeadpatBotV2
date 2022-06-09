@@ -34,7 +34,7 @@ import images, responder, guilds, polls, database
 from cogs.pollCog import PollCog
 from cogs.utilityCogs import StorageCog, TestCog
 from cogs.managementCogs import ManageWaifusCog
-from cogs.waifuCog import WaifuCog
+from cogs.waifuCogs import WaifuCog, GachaCog
 
 TOKEN=os.environ['DISCORD_TOKEN']
 #set up our intents
@@ -148,6 +148,7 @@ bot.add_cog(StorageCog(bot))
 bot.add_cog(PollCog(bot))
 bot.add_cog(ManageWaifusCog(bot))
 bot.add_cog(WaifuCog(bot))
+bot.add_cog(GachaCog(bot))
 if 'TEST_ENV' in os.environ:
     #devopment commands
     bot.add_cog(TestCog(bot))

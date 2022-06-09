@@ -24,7 +24,7 @@ A discord bot for headpats and rating waifus
 2.x.x - slash commands  
 3.x.x - Directory Refactoring  
 4.x.x - Permissioning  
-4.4.x - Persistent Voting 
+5.x.x - Gacha game and Tickets
 
 
 [Add the bot to your server](https://discord.com/oauth2/authorize?client_id=807859649621524490&permissions=33792&scope=applications.commands%20bot)  

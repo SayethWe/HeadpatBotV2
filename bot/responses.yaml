@@ -99,3 +99,6 @@ WAIFU: #waifu
       - Found {0} Waifus in your Server
     DIFFERENCE:
       - Global database has {0} waifus that you don't.
+TICKETS:
+  GET:
+    - You have {0} tickets

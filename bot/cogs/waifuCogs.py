@@ -89,4 +89,16 @@ class WaifuCog(commands.Cog):
             file = disnake.File(waifuList, filename='Waifus.txt')
             await inter.send(reply,file=file,ephemeral=True)
 
+class GachaCog(commands.Cog):
+    def __init__(self,bot:commands.Bot):
+        self.bot=bot
+        self.logger=logging.getLogger(os.environ['LOGGER_NAME'])
+
+    @commands.slash_command()
+    async def tickets(self,inter:ApplicationCommandInteraction):
+        pass
+
+    @tickets.sub_command()
+    async def get(self,inter:ApplicationCommandInteraction):
+        await inter.send(responder.getResponse('TICKETS.GET',self.bot.servers[inter.guild.id].getTickets(inter.author.id)),ephemeral=True)
     

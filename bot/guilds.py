@@ -1,5 +1,6 @@
 from enum import Enum
 import os, logging
+from re import L
 import images
 import pickle
 from polls import Poll, Waifu
@@ -14,7 +15,6 @@ if not os.path.exists(SAVE_FOLDER):
 logger = logging.getLogger(os.environ['LOGGER_NAME'])
 
 class Server:
-
     class ServerOption(Enum):
         PollWaifuCount='pollSize' #how many waifus to put in a poll
         PollParticipationCheckStartHours='pollCheckZero' #when to start checking for poll participations
@@ -41,6 +41,7 @@ class Server:
         self.waifus=list[Waifu]()
         self.polls=list[Poll]()
         self.options=Server.defaultOptions()
+        self.tickets=dict[int,int]
 
     def addWaifu(self,name:str,source:str):
         if os.path.exists(os.path.join(images.POLL_FOLDER,images.sourceNameFolder(name,source))):
@@ -109,3 +110,21 @@ class Server:
 
     def removePoll(self,poll:Poll):
         self.polls.remove(poll)
+    
+    def ensureTickets(self,user:int):
+        try:
+            self.tickets
+        except AttributeError:
+            self.tickets = dict[int,int]() #backwards compatibility code
+        if user not in self.tickets:
+            self.tickets[user]=0
+
+    def modifyTickets(self,user:int,delta:int):
+        self.ensureTickets(user)
+        oldTickets=self.tickets[user]
+        self.tickets[user] = oldTickets+delta
+
+    def getTickets(self,user:int) -> int:
+        self.ensureTickets(user)
+        return self.tickets[user]
+        

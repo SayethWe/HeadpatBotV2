@@ -108,7 +108,6 @@ class PollCog(commands.Cog):
         inter:ApplicationCommandInteraction,
         pollNum:int = commands.Param(-1,ge=0,description="Which poll to see results for")
     ):
-        await inter.response.defer()
         pollGuild = self.bot.servers[inter.guild.id]
         self.logger.debug(f'Getting results for {inter.guild.id} poll {pollNum}')
         try:

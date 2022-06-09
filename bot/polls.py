@@ -33,6 +33,7 @@ class Poll():
     A single poll object, that handles creation, voting backend, and end calculation
     """
     rng=default_rng()
+    VOTING_TICKETS = 2
 
     def __init__(self,messageId:int,size:int):
         self.messageId=messageId
@@ -76,15 +77,20 @@ class Poll():
         if not self.users:
             # no one participated
             return
-        #for each list in voters
+        ratingChanges = self.ratingChanges() #determine how much the ratings change
+        #for each waifu in the poll
         for i in range(self.size):
             #remove any users who didn't confirm
             self.voters[i]=set(self.users).intersection(self.voters[i])
-            #set votes to be the length
+            #set total votes to be the length
             self.votes[i]=len(self.voters[i])
-        ratingChanges = self.ratingChanges()
-        for i in range(self.size):
+            #update the ratings
             self.waifus[i].updateRating(ratingChanges[i])
+        #for each user who voted
+        for userId in self.users:
+            #award points
+            bot.servers[self.messageId].modifyTickets(userId,Poll.VOTING_TICKETS)
+
 
     def countVotes(self):
         return len(self.users)
