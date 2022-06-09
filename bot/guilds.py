@@ -96,7 +96,7 @@ class Server:
         return list(map(lambda waifu: waifu.rating,self.waifus))
 
     def ratingsPlot(self,ax:plt.Axes):
-        ax.violinplot(self.getWaifuRatings())
+        ax.boxplot(self.getWaifuRatings())
         ax.set_ylabel("Waifu Rating")
         ax.set_title("Waifu Ratings")
 

@@ -1,4 +1,5 @@
 import logging, os
+from re import A
 import numpy as np
 import matplotlib.pyplot  as plt
 from numpy.random import default_rng
@@ -13,6 +14,9 @@ import responder
 logger = logging.getLogger(os.environ['LOGGER_NAME'])
 
 class Waifu():
+    """
+    A server-side Waifu
+    """
     def __init__(self,name:str,source:str,rating:int):
         self.name=name
         self.source=source
@@ -25,7 +29,9 @@ class Waifu():
         self.rating+=delta
 
 class Poll():
-
+    """
+    A single poll object, that handles creation, voting backend, and end calculation
+    """
     rng=default_rng()
 
     def __init__(self,messageId:int,size:int):
@@ -142,6 +148,45 @@ class Poll():
         ax.set_xlabel("Number of Votes")
         ax.set_ylabel("Occurence Count")
         ax.set_title("Votes by Waifu")
+    
+    def resultsTable(self,ax:plt.Axes):
+        logger.debug(self.votes)
+        firstPlace=np.argmax(self.votes)
+        worstPlace=np.argmin(self.votes)
+        deltaR=self.ratingChanges()
+        largestGain=np.argmax(deltaR)
+        largestLoss=np.argmin(deltaR)
+        results=[
+            [self.waifus[firstPlace].name,self.votes[firstPlace]],
+            [self.waifus[largestGain].name,deltaR[largestGain]],
+            [self.waifus[worstPlace].name,self.votes[worstPlace]],
+            [self.waifus[largestLoss].name,deltaR[largestLoss]]]
+        logger.debug(results)
+        ax.axis('tight')
+        t=ax.table(
+            cellText=results,
+            colLabels=("waifu","value"),
+            rowLabels=("First","Gain","Last","Loss"),
+            loc='center',
+            colWidths=(0.6,0.2)
+        )
+        t.auto_set_font_size(False)
+        t.set_fontsize(12)
+        #t.scale(1,2)
+        ax.axis('off')
+        ax.set_title("Special Mentions")
+
+    def resultsText(self):
+        firstPlace=np.argmax(self.votes)
+        worstPlace=np.argmax(self.votes)
+        dRating=self.ratingChanges()
+        largestGain=np.argmax(dRating)
+        largestLoss=np.argmin(dRating)
+        results=[
+            [self.votes[firstPlace],self.waifus[firstPlace].name,self.waifus[firstPlace].source],
+            [dRating[largestGain],self.waifus[largestGain].name,self.waifus[largestGain].source],
+            [self.votes[worstPlace],self.waifus[worstPlace].name,self.waifus[worstPlace].source],
+            [dRating[largestLoss],self.waifus[largestLoss].name,self.waifus[largestLoss].source]]
 
     @staticmethod
     def selectPoll(pollSize:int,ratings:np.ndarray[int, np.dtype[np.int64]]):

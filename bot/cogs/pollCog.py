@@ -108,16 +108,18 @@ class PollCog(commands.Cog):
         inter:ApplicationCommandInteraction,
         pollNum:int = commands.Param(-1,ge=0,description="Which poll to see results for")
     ):
+        await inter.response.defer()
         pollGuild = self.bot.servers[inter.guild.id]
         self.logger.debug(f'Getting results for {inter.guild.id} poll {pollNum}')
         try:
             poll = pollGuild.polls[pollNum]
         except Exception: # wrong index error
             return ##TODO: await
-        fig,axs = plt.subplots(1,3,squeeze=False)
+        fig,axs = plt.subplots(2,2,squeeze=False,figsize=(8,8))
         poll.voteHistogram(axs[0,0])
         poll.performancePlot(axs[0,1])
-        pollGuild.ratingsPlot(axs[0,2])
+        pollGuild.ratingsPlot(axs[1,0])
+        poll.resultsTable(axs[1,1])
         fig.suptitle("Waifu poll results")
         fig.set_tight_layout(True)
         figBytes= BytesIO()
