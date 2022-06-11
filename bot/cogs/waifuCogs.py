@@ -45,7 +45,7 @@ class WaifuCog(commands.Cog):
     ):
         name=waifuData.name
         source=waifuData.source
-        image = images.loadPollImage(images.sourceNameFolder(source,name))
+        image = images.loadPollImage(images.sourceNameFolder(name,source))
         imageBytes = images.imageToBytes(image)
         attachment = File(imageBytes, filename = f'{name}.png')
         reply = responder.getResponse('WAIFU.SHOW.PASS')
