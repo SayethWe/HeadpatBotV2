@@ -130,12 +130,7 @@ class Poll():
             return
         #TODO lock vote buttons by user, which cannot be done yet.
         self.confirmVotes(user.id)
-        try:
-            name = user.nick
-            assert name is not None
-        except:
-            name = user.name
-        await button_inter.send(responder.getResponse('WAIFU.POLL.VOTE.CONFIRM',name))
+        await button_inter.send(responder.getResponse('WAIFU.POLL.VOTE.CONFIRM',user.display_name))
 
     def performancePlot(self,ax:plt.Axes):
         expectation=Poll.cubicSigmoid(self.ratings)
