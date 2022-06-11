@@ -1,11 +1,11 @@
 from enum import Enum
 import os, logging
-from re import L
 import images
 import pickle
 from polls import Poll, Waifu
-from headpatExceptions import WaifuDNEError,WaifuConflictError
+from headpatExceptions import WaifuDNEError,WaifuConflictError,InsufficientOptionsError
 import matplotlib.pyplot as plt
+import numpy as np
 
 servers=list()
 
@@ -127,4 +127,23 @@ class Server:
     def getTickets(self,user:int) -> int:
         self.ensureTickets(user)
         return self.tickets[user]
-        
+
+    def waifuRoll(self,userId:int,tickets:int) -> Waifu:
+        rng=np.random.default_rng()
+        #get available waifus and their ratings
+        available = [waifu for waifu in self.waifus if waifu.claimer == 0 and waifu.rating >= 0]
+        ratings=np.array([waifu.rating for waifu in available])
+        #generate pick probabilities
+        weights=np.mean(ratings)/((tickets-ratings)**2+1)+np.std(ratings)
+        p=weights/sum(weights) #as probabilities
+        try:
+            #pick one
+            choice = rng.choice(available,1,p=p)[0]
+            choice.claim(userId) #mark the waifu claimed
+        except ValueError:
+            #error means there are no unclaimed left
+            raise InsufficientOptionsError
+        return choice
+
+    def claimedWaifus(self,userId:int) -> list[Waifu]:
+        return [waifu for waifu in self.waifus if waifu.claimer == userId]

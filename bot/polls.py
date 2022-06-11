@@ -21,12 +21,24 @@ class Waifu():
         self.name=name
         self.source=source
         self.rating=rating
+        self._claimer=0
 
     def __repr__(self):
         return f'{self.name} is a waifu from {self.source} with a rating of {self.rating}'
 
     def updateRating(self,delta:int):
         self.rating+=delta
+
+    @property
+    def claimer(self) -> int|None:
+        try:
+            self._claimer 
+        except AttributeError:
+            self._claimer=0 #more backwards compatibility code
+        return self._claimer
+
+    def claim(self,claimer:int):
+        self._claimer=claimer
 
 class Poll():
     """

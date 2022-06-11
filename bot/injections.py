@@ -25,6 +25,9 @@ class WaifuData:
     name:str
     source: str
 
+    def __repr__(self):
+        return f'{self.name}|{self.source}'
+
 @commands.register_injection
 async def getWaifu(
     inter:ApplicationCommandInteraction,

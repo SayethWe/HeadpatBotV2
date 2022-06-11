@@ -1,7 +1,7 @@
 import os, logging
 from disnake.ext import commands
 from injections import WaifuData
-from disnake import ApplicationCommandInteraction, File
+from disnake import ApplicationCommandInteraction, Embed, File
 import disnake
 import glob
 import responder, approval, images
@@ -10,6 +10,20 @@ class WaifuCog(commands.Cog):
     def __init__(self,bot:commands.Bot):
         self.bot=bot
         self.logger=logging.getLogger(os.environ['LOGGER_NAME'])
+
+    # Headpat
+    @commands.slash_command(
+        description = "get headpats, up to four at a time."
+    )
+    async def headpat(
+        inter:ApplicationCommandInteraction,
+        qty:int=commands.Param(default=1,le=4,gt=0)
+    ): #show 'randomly' selected headpat images
+        for i in range(max(1,min(qty,4))):
+            image=images.loadHeadpatImage()
+            imageBytes=images.imageToBytes(image)
+            attachment = File(imageBytes, filename = 'headpat.png')
+            await inter.send(responder.getResponse('HEADPAT.PASS'),file=attachment)
 
     @commands.slash_command()
     async def waifu(
@@ -48,8 +62,24 @@ class WaifuCog(commands.Cog):
         image = images.loadPollImage(images.sourceNameFolder(name,source))
         imageBytes = images.imageToBytes(image)
         attachment = File(imageBytes, filename = f'{name}.png')
+        embed=Embed(title=waifuData)
+        embed.set_image(file=attachment)
+        #check the server to see if we can add extra information
+        serverSide=self.bot.servers[inter.guild.id].getWaifuByNameSource(name,source)
+        if serverSide:
+            #waifu exists in server
+            #add rating and claim info
+            if serverSide.claimer == 0:
+                #unclaimed
+                footer_text=responder.getResponse('WAIFU.SHOW.FOOTER.UNCLAIMED',serverSide.rating)
+            else:
+                claimer = await self.bot.getch_user(serverSide.claimer)
+                footer_text=responder.getResponse('WAIFU.SHOW.FOOTER.CLAIMED',serverSide.rating,claimer.display_name)
+            embed.set_footer(text=footer_text)
+        else:
+            pass
         reply = responder.getResponse('WAIFU.SHOW.PASS')
-        await inter.send(reply,file=attachment)
+        await inter.send(reply,embed=embed)
 
     @waifu.sub_command(
         description="get a list of waifus, either in this server, or available for pulls"
@@ -101,4 +131,44 @@ class GachaCog(commands.Cog):
     @tickets.sub_command()
     async def get(self,inter:ApplicationCommandInteraction):
         await inter.send(responder.getResponse('TICKETS.GET',self.bot.servers[inter.guild.id].getTickets(inter.author.id)),ephemeral=True)
-    
+
+    @commands.slash_command(    )
+    async def gacha(
+        self,
+        inter:ApplicationCommandInteraction
+    ):
+        pass
+
+    @gacha.sub_command(
+        description="Roll and claim a server waifu"
+    )
+    async def roll(
+        self,
+        inter:ApplicationCommandInteraction,
+        spend:int=commands.Param(ge=1)
+    ):
+        await inter.response.defer()
+        userId=inter.author.id
+        server=self.bot.servers[inter.guild.id]
+        #ensure user has enough tickets
+        if server.getTickets(userId) < spend:
+            await inter.send(responder.getResponse('GACHA.ROLL.INSUFFICIENT'))
+            return
+        #ensure user isn't over limit for waifus TODO
+        #remove tickets
+        server.modifyTickets(userId,-spend)
+        #roll a waifu
+        selected=server.waifuRoll(userId,spend)
+        #do the alert
+        await inter.send(responder.getResponse('GACHA.ROLL.SUCCESS',selected.name,selected.source))
+
+    @gacha.sub_command(
+        description="see your claimed waifus"
+    )   
+    async def collection(
+        self,
+        inter:ApplicationCommandInteraction
+    ):
+        server=self.bot.servers[inter.guild.id]
+        claimed=server.claimedWaifus(inter.author.id)
+        await inter.send(claimed)

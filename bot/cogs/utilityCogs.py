@@ -79,3 +79,8 @@ class TestCog(commands.Cog):
     @ratings.sub_command()
     async def stdev(self,inter):
         await inter.send(f'stdev is {stdev([option.rating for option in self.bot.servers[inter.guild.id].waifus])}')
+
+    @commands.slash_command()
+    async def addTickets(self,inter,amt:int):
+        self.bot.servers[inter.guild.id].modifyTickets(inter.author.id,amt)
+        await inter.send('done',ephemeral=True)
