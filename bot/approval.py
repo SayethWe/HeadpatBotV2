@@ -1,26 +1,9 @@
-# Copyright (C) 2022 geekman9097
-# 
-# This file is part of HeadpatBot.
-# 
-# HeadpatBot is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-# 
-# HeadpatBot is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-# 
-# You should have received a copy of the GNU General Public License
-# along with HeadpatBot.  If not, see <http://www.gnu.org/licenses/>.
-
 import os
 from io import BytesIO
 from disnake.ui import View, Button, TextInput, Modal
 from disnake import Attachment, ButtonStyle
 from disnake.ext.commands import Bot
-import images, responder
+import images
 
 approval_channel=int(os.environ['OWNER_CHANNEL'])
 announce_channel=int(os.environ['SHARE_CHANNEL'])
@@ -35,12 +18,12 @@ async def getWaifuApproval(bot: Bot, image: Attachment, name:str,source:str):
         announce=bot.get_channel(announce_channel)
         if announce is None:
             announce = bot.fetch_channel(announce_channel)
-        await button_inter.send(responder.getResponse('WAIFU.ADD.APPROVE',name))
+        await bot.respond(button_inter,'WAIFU.ADD.APPROVE',name)
         attachment = await image.to_file()
         if existingWaifu:
-            await announce.send(responder.getResponse('WAIFU.ADD.ANNOUNCE.EXISTING',name,source),file = attachment)
+            await announce.send(bot.getResponse('WAIFU.ADD.ANNOUNCE.EXISTING',name,source),file = attachment)
         else:
-            await announce.send(responder.getResponse('WAIFU.ADD.ANNOUNCE.NEW',name,source),file = attachment)
+            await announce.send(bot.getResponse('WAIFU.ADD.ANNOUNCE.NEW',name,source),file = attachment)
 
 
     async def edit_callback(button_inter):
@@ -52,7 +35,7 @@ async def getWaifuApproval(bot: Bot, image: Attachment, name:str,source:str):
     async def reject_callback(button_inter):
         #print('reject')
         lockButtons()
-        await button_inter.send(responder.getResponse('WAIFU.ADD.DENY',name))
+        await bot.respond(button_inter,'WAIFU.ADD.DENY',name)
 
     view=View(timeout=None)
     acceptButton=Button(label='accept',style=ButtonStyle.green)
@@ -70,7 +53,7 @@ async def getWaifuApproval(bot: Bot, image: Attachment, name:str,source:str):
 
     request_channel = bot.get_channel(approval_channel)
     attachment = await image.to_file()
-    await request_channel.send(responder.getResponse('WAIFU.ADD.ASK',name,source),
+    await request_channel.send(bot.getResponse('WAIFU.ADD.ASK',name,source),
         view=view,file=attachment)
 
 class EditModal(Modal):

@@ -1,3 +1,4 @@
+from __future__ import annotations #allows factory type annotations
 from enum import Enum
 import os, logging
 import images
@@ -6,8 +7,6 @@ from polls import Poll, Waifu
 from headpatExceptions import WaifuDNEError,WaifuConflictError,InsufficientOptionsError
 import matplotlib.pyplot as plt
 import numpy as np
-
-servers=list()
 
 SAVE_FOLDER = os.path.join('guilds')
 if not os.path.exists(SAVE_FOLDER):
@@ -67,7 +66,7 @@ class Server:
             pickle.dump(self,saveFile)
 
     @staticmethod
-    def load(identity:int):
+    def load(identity:int) -> Server:
         try:
             with open(os.path.join(SAVE_FOLDER,f'{identity}.p'),'rb') as loadFile:
                 loaded = pickle.load(loadFile)
@@ -91,7 +90,7 @@ class Server:
         try:
             return selectedWaifus[0]
         except IndexError:
-            return []
+            return None
 
     def getWaifuRatings(self):
         return list(map(lambda waifu: waifu.rating,self.waifus))

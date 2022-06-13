@@ -1,19 +1,21 @@
+#python imports
 import logging, os
-from disnake.ext import commands
-from injections import WaifuData
-import disnake
-from disnake import ApplicationCommandInteraction
-import responder
+#local imports
 from headpatExceptions import WaifuConflictError, WaifuDNEError
 from guilds import Server
+from headpatBot import HeadpatBot
+from injections import WaifuData
+#library imports
+from disnake import ApplicationCommandInteraction, Permissions, Attachment, File
+from disnake.ext import commands
 
 class ManageWaifusCog(commands.Cog):
-    def __init__(self, bot:commands.Bot):
+    def __init__(self, bot:HeadpatBot):
         self.bot=bot
         self.logger=logging.getLogger(os.environ['LOGGER_NAME'])
 
     @commands.slash_command(
-        default_permission=disnake.Permissions(manage_messages=True),
+        default_permission=Permissions(manage_messages=True),
         dm_permission=False
     )
     async def manageWaifus(
@@ -34,12 +36,11 @@ class ManageWaifusCog(commands.Cog):
         source=waifuData.source
         try:
             self.bot.servers[inter.guild.id].addWaifu(name,source)
-            reply=responder.getResponse('WAIFU.PULL.PASS',name,source)
+            await self.bot.respond(inter,'WAIFU.PULL.PASS',name,source)
         except WaifuConflictError:
-            reply=responder.getResponse('WAIFU.ERROR.CONFLICT',name,source)
+            await self.bot.respond(inter,'WAIFU.ERROR.CONFLICT',name,source)
         except WaifuDNEError:
-            reply=responder.getResponse('WAIFU.ERROR.DNE',name,source)
-        await inter.send(reply)
+            await self.bot.respond(inter,'WAIFU.ERROR.DNE',name,source)
 
     @manageWaifus.sub_command(
         description="remove a waifu from further polls on this server"
@@ -53,10 +54,9 @@ class ManageWaifusCog(commands.Cog):
         source=waifuData.source
         try:
             self.bot.servers[inter.guild.id].removeWaifu(name,source)
-            reply=responder.getResponse('WAIFU.REMOVE.PASS',name,source)
+            await self.bot.respond(inter,'WAIFU.REMOVE.PASS',name,source)
         except WaifuDNEError:
-            reply=responder.getResponse('WAIFU.ERROR.DNE',name,source)
-        await inter.send(reply)
+            await self.bot.respond(inter,'WAIFU.ERROR.DNE',name,source)
 
     @manageWaifus.sub_command(
         description="add a whole list of waifus defined in a CSV to your server"
@@ -64,7 +64,7 @@ class ManageWaifusCog(commands.Cog):
     async def pullCSV(
         self,
         inter:ApplicationCommandInteraction,
-        csv:disnake.Attachment, 
+        csv:Attachment, 
     ):
         await inter.response.defer()
         if csv.content_type.startswith('text/csv'):
@@ -89,15 +89,15 @@ class ManageWaifusCog(commands.Cog):
 
             if(numFailed>0):
                 with open(f"failedList{inter.guild.id}.txt",'rb') as failedList:
-                    file = disnake.File(failedList,filename="Failed Waifus.txt")
-                    await inter.send(responder.getResponse('WAIFU.PULL.CSV.PASS', len(waifus)-numFailed),file=file,ephemeral=True)
+                    file = File(failedList,filename="Failed Waifus.txt")
+                    await self.bot.respond(inter,'WAIFU.PULL.CSV.PASS', len(waifus)-numFailed,file=file,ephemeral=True)
             else:
-                await inter.send(responder.getResponse('WAIFU.PULL.CSV.PASS', len(waifus)))
+                await self.bot.respond(inter,'WAIFU.PULL.CSV.PASS', len(waifus))
         else:
-            await inter.send(responder.getResponse('WAIFU.PULL.CSV.NOT_CSV'),ephemeral=True)
+            await self.bot.respond(inter,'WAIFU.PULL.CSV.NOT_CSV',ephemeral=True)
 
 class ServerOptionsCog(commands.Cog):
-    def __init__(self,bot:commands.Bot):
+    def __init__(self,bot:HeadpatBot):
         self.bot=bot
         self.logger=logging.getLogger(os.environ['LOGGER_NAME'])
 
@@ -113,8 +113,8 @@ class ServerOptionsCog(commands.Cog):
         guild=self.bot.servers[inter.guild.id]
         if setValue == -1:
             #show value
-            await inter.send(responder.getResponse('OPTION.GET',setting,guild.options[setting]))
+            await self.bot.respond(inter,'OPTION.GET',setting,guild.options[setting])
         else:
             #set value
             guild.options[setting]=setValue
-            await inter.send(responder.getResponse('OPTION.SET',setting,setValue))
+            await self.bot.respond(inter,'OPTION.SET',setting,setValue)

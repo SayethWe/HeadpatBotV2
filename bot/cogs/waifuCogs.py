@@ -1,13 +1,16 @@
+#python imports
 import os, logging
-from disnake.ext import commands
-from injections import WaifuData
-from disnake import ApplicationCommandInteraction, Embed, File
-import disnake
 import glob
-import responder, approval, images
+#local imports
+from injections import WaifuData
+import approval, images
+from headpatBot import HeadpatBot
+#library imports
+from disnake import ApplicationCommandInteraction, Embed, File, Attachment
+from disnake.ext import commands
 
 class WaifuCog(commands.Cog):
-    def __init__(self,bot:commands.Bot):
+    def __init__(self,bot:HeadpatBot):
         self.bot=bot
         self.logger=logging.getLogger(os.environ['LOGGER_NAME'])
 
@@ -16,6 +19,7 @@ class WaifuCog(commands.Cog):
         description = "get headpats, up to four at a time."
     )
     async def headpat(
+        self,
         inter:ApplicationCommandInteraction,
         qty:int=commands.Param(default=1,le=4,gt=0)
     ): #show 'randomly' selected headpat images
@@ -23,7 +27,7 @@ class WaifuCog(commands.Cog):
             image=images.loadHeadpatImage()
             imageBytes=images.imageToBytes(image)
             attachment = File(imageBytes, filename = 'headpat.png')
-            await inter.send(responder.getResponse('HEADPAT.PASS'),file=attachment)
+            await self.bot.respond(inter,'HEADPAT.PASS',file=attachment)
 
     @commands.slash_command()
     async def waifu(
@@ -38,16 +42,16 @@ class WaifuCog(commands.Cog):
     async def suggest(
         self,
         inter:ApplicationCommandInteraction,
-        image:disnake.Attachment, 
+        image:Attachment, 
         waifuData:WaifuData
     ): #Sends a waifu to the approval channel
         if image.content_type.startswith('image'): #ensure it's actually an image
             name=waifuData.name
             source=waifuData.source
-            await inter.send(responder.getResponse('WAIFU.ADD.WAIT')) #tell the user it's in consideration
+            await self.bot.respond(inter,'WAIFU.ADD.WAIT') #tell the user it's in consideration
             await approval.getWaifuApproval(self.bot,image,name,source) #send it off the the approval system
         else:
-            await inter.send(responder.getResponse('WAIFU.ADD.NOT_IMAGE'))
+            await self.bot.respond(inter,'WAIFU.ADD.NOT_IMAGE')
 
     @waifu.sub_command(
         description="Show an image of a waifu from the global database"
@@ -71,15 +75,12 @@ class WaifuCog(commands.Cog):
             #add rating and claim info
             if serverSide.claimer == 0:
                 #unclaimed
-                footer_text=responder.getResponse('WAIFU.SHOW.FOOTER.UNCLAIMED',serverSide.rating)
+                footer_text=self.bot.getResponse('WAIFU.SHOW.FOOTER.UNCLAIMED',serverSide.rating)
             else:
                 claimer = await self.bot.getch_user(serverSide.claimer)
-                footer_text=responder.getResponse('WAIFU.SHOW.FOOTER.CLAIMED',serverSide.rating,claimer.display_name)
+                footer_text=self.bot.getResponse('WAIFU.SHOW.FOOTER.CLAIMED',serverSide.rating,claimer.display_name)
             embed.set_footer(text=footer_text)
-        else:
-            pass
-        reply = responder.getResponse('WAIFU.SHOW.PASS')
-        await inter.send(reply,embed=embed)
+        await self.bot.response(inter,'WAIFU.SHOW.PASS',embed=embed)
 
     @waifu.sub_command(
         description="get a list of waifus, either in this server, or available for pulls"
@@ -101,10 +102,10 @@ class WaifuCog(commands.Cog):
                     (source,name,*discard) = waifuStr.split('/')
                     waifuList.write(f'{name} from {source}\n')
                     count+=1
-                reply = responder.getResponse('WAIFU.LIST.GLOBAL',count)
+                reply = self.bot.getResponse('WAIFU.LIST.GLOBAL',count)
             elif scope == 'Local':
                 waifus=self.bot.servers[inter.guild.id].waifus
-                reply = responder.getResponse('WAIFU.LIST.LOCAL',len(waifus))
+                reply = self.bot.getResponse('WAIFU.LIST.LOCAL',len(waifus))
                 for waifu in waifus:
                     waifuList.write(f"{waifu}\n")
             else:
@@ -114,13 +115,13 @@ class WaifuCog(commands.Cog):
                     if not self.bot.servers[inter.guild.id].getWaifuByNameSource(name,source):
                         waifuList.write(f'{name} from {source}\n')
                         count+=1
-                reply = responder.getResponse('WAIFU.LIST.DIFFERENCE',count)
+                reply = self.bot.getResponse('WAIFU.LIST.DIFFERENCE',count)
         with open('Waifus.txt','rb') as waifuList:
-            file = disnake.File(waifuList, filename='Waifus.txt')
-            await inter.send(reply,file=file,ephemeral=True)
+            file = File(waifuList, filename='Waifus.txt')
+            await self.bot.send(reply,file=file,ephemeral=True)
 
 class GachaCog(commands.Cog):
-    def __init__(self,bot:commands.Bot):
+    def __init__(self,bot:HeadpatBot):
         self.bot=bot
         self.logger=logging.getLogger(os.environ['LOGGER_NAME'])
 
@@ -130,7 +131,7 @@ class GachaCog(commands.Cog):
 
     @tickets.sub_command()
     async def get(self,inter:ApplicationCommandInteraction):
-        await inter.send(responder.getResponse('TICKETS.GET',self.bot.servers[inter.guild.id].getTickets(inter.author.id)),ephemeral=True)
+        await self.bot.respond(inter,'TICKETS.GET',self.bot.servers[inter.guild.id].getTickets(inter.author.id),ephemeral=True)
 
     @commands.slash_command(    )
     async def gacha(
@@ -152,7 +153,7 @@ class GachaCog(commands.Cog):
         server=self.bot.servers[inter.guild.id]
         #ensure user has enough tickets
         if server.getTickets(userId) < spend:
-            await inter.send(responder.getResponse('GACHA.ROLL.INSUFFICIENT'))
+            await self.bot.respond(inter,'GACHA.ROLL.INSUFFICIENT')
             return
         #ensure user isn't over limit for waifus TODO
         #remove tickets
@@ -160,7 +161,7 @@ class GachaCog(commands.Cog):
         #roll a waifu
         selected=server.waifuRoll(userId,spend)
         #do the alert
-        await inter.send(responder.getResponse('GACHA.ROLL.SUCCESS',selected.name,selected.source))
+        await self.bot.respond(inter,'GACHA.ROLL.SUCCESS',selected.name,selected.source)
 
     @gacha.sub_command(
         description="see your claimed waifus"

@@ -1,5 +1,5 @@
 import logging, os
-from re import A
+from enum import Enum
 import numpy as np
 import matplotlib.pyplot  as plt
 from numpy.random import default_rng
@@ -7,9 +7,7 @@ from disnake.ui import Button, View
 from disnake import ButtonStyle
 from disnake.ui import Button
 from disnake import ButtonStyle, MessageInteraction
-from disnake.ext.commands import Bot
 from headpatExceptions import InsufficientOptionsError
-import responder
 
 logger = logging.getLogger(os.environ['LOGGER_NAME'])
 
@@ -40,12 +38,18 @@ class Waifu():
     def claim(self,claimer:int):
         self._claimer=claimer
 
-class Poll():
+class Poll:
     """
     A single poll object, that handles creation, voting backend, and end calculation
     """
     rng=default_rng()
     VOTING_TICKETS = 2
+
+    class BUTTON_RESULTS(Enum):
+        VOTE_ADD=0
+        VOTE_REMOVE=1
+        CONFIRM=2
+        CLOSED=3
 
     def __init__(self,messageId:int,size:int):
         self.messageId=messageId
@@ -81,14 +85,15 @@ class Poll():
             self.waifus.append(choice)
         return (names,sources)
         
-    def endPoll(self,bot:Bot): #TODO: maybe take in an inter from commandclose, but if none, do autoclose stuff?
-        self.open=False
+    def endPoll(self): #TODO: maybe take in an inter from commandclose, but if none, do autoclose stuff?
         #TODO: Figure out how to get the original message, and edit it. get_message returned none, and no equivalent fetch seems to exist.
         #fetching a message may actually require the see_messages permissions - is this worth askign for another perm?
         #update waifus
         if not self.users:
             # no one participated
-            return
+            self.open=False
+            logger.debug('Unparticipated poll')
+            return {}
         ratingChanges = self.ratingChanges() #determine how much the ratings change
         #for each waifu in the poll
         for i in range(self.size):
@@ -99,21 +104,16 @@ class Poll():
             #update the ratings
             self.waifus[i].updateRating(ratingChanges[i])
         #for each user who voted
+        awardPoints=dict[int,int]()
         for userId in self.users:
             #award points
-            bot.servers[self.messageId].modifyTickets(userId,Poll.VOTING_TICKETS)
-
+            amt=Poll.VOTING_TICKETS
+            awardPoints[userId]=amt
+        self.open=False #after everything is done, close the poll, so if we error, it stays open.
+        return awardPoints
 
     def countVotes(self):
         return len(self.users)
-
-    def createPollView(self, names:list[str],sources:list[str]):
-        view = View(timeout=None)
-        for i in range(len(names)):
-            button = VoteButton(names[i],sources[i],i,self)
-            view.add_item(button)
-        view.add_item(ConfirmButton(self))
-        return view
 
     def createPollButtons(self,pollInd:int,names:list[str],sources:list[str]):
         buttons:list[Button]=[None]*(self.size+1)
@@ -122,27 +122,24 @@ class Poll():
         buttons[-1]=Button(style=ButtonStyle.green,label='Confirm',custom_id=f'poll|{self.messageId}|{pollInd}|Confirm')
         return buttons
 
-    async def doVote(self,button_inter:MessageInteraction,voteInd:int):
-        user=button_inter.author.id
-        if user in self.users or not self.open: #poll won't take their vote
-            await button_inter.send(responder.getResponse('WAIFU.POLL.VOTE.CLOSED'),ephemeral=True)
-        elif user not in self.voters[voteInd]: #user hasn't voted for this - add vote
-            await button_inter.send(responder.getResponse('WAIFU.POLL.VOTE.ADD',self.waifus[voteInd].name),ephemeral=True)
-            self.voters[voteInd].append(user)
+    def doVote(self,userid:int,voteInd:int):
+        if userid in self.users or not self.open: #poll won't take their vote
+            return Poll.BUTTON_RESULTS.CLOSED
+        elif userid not in self.voters[voteInd]: #user hasn't voted for this - add vote
+            self.voters[voteInd].append(userid)
             self.addVote(voteInd)
+            return Poll.BUTTON_RESULTS.VOTE_ADD
         else: #user is cancelling a vote
-            await button_inter.send(responder.getResponse('WAIFU.POLL.VOTE.REMOVE',self.waifus[voteInd].name),ephemeral=True)
-            self.voters[voteInd].remove(user)
+            self.voters[voteInd].remove(userid)
             self.cancelVote(voteInd)
+            return Poll.BUTTON_RESULTS.VOTE_REMOVE
 
-    async def doConfirm(self,button_inter:MessageInteraction):
-        user=button_inter.author
-        if user in self.users or not self.open:
-            await button_inter.send(responder.getResponse('WAIFU.POLL.VOTE.CLOSED'),ephemeral=True)
-            return
+    def doConfirm(self,userid:int):
+        if userid in self.users or not self.open:
+            return Poll.BUTTON_RESULTS.CLOSED
         #TODO lock vote buttons by user, which cannot be done yet.
-        self.confirmVotes(user.id)
-        await button_inter.send(responder.getResponse('WAIFU.POLL.VOTE.CONFIRM',user.display_name))
+        self.confirmVotes(userid)
+        return Poll.BUTTON_RESULTS.CONFIRM
 
     def performancePlot(self,ax:plt.Axes):
         expectation=Poll.cubicSigmoid(self.ratings)
@@ -269,39 +266,5 @@ class Poll():
         else:
             return np.zeros_like(data)
 
-class VoteButton(Button):
-    def __init__(self, name:str, source:str,index:int,poll:Poll):
-        self.selected = False
-        self.name=name
-        self.poll=poll
-        self.index=index
-        self.users=list[int]()
-        super().__init__(style=ButtonStyle.blurple,label=f'{name}|{source}')
-
-    async def callback(self, button_inter : MessageInteraction):
-        user=button_inter.author.id
-        if user in self.poll.users or not self.poll.open:
-            await button_inter.send(responder.getResponse('WAIFU.POLL.VOTE.CLOSED'),ephemeral=True)
-        elif user not in self.users:
-            await button_inter.send(responder.getResponse('WAIFU.POLL.VOTE.ADD',self.name),ephemeral=True)
-            self.users.append(user)
-            self.poll.addVote(self.index)
-        else:
-            await button_inter.send(responder.getResponse('WAIFU.POLL.VOTE.REMOVE',self.name),ephemeral=True)
-            self.users.remove(user)
-            self.poll.cancelVote(self.index)
-
-class ConfirmButton(Button):
-
-    def __init__(self,poll:Poll):
-        self.poll=poll
-        super().__init__(style=ButtonStyle.green,label='confirm')
-
-    async def callback(self, button_inter: MessageInteraction):
-        user=button_inter.author
-        if user in self.poll.users or not self.poll.open:
-            await button_inter.send(responder.getResponse('WAIFU.POLL.VOTE.CLOSED'),ephemeral=True)
-            return
-        #TODO lock vote buttons by user, which cannot be done yet.
-        self.poll.confirmVotes(user.id)
-        await button_inter.send(responder.getResponse('WAIFU.POLL.VOTE.CONFIRM',user.name))
+    def __repr__(self) -> str:
+        return f'Poll with{vars(self)}'

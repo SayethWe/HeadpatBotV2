@@ -1,13 +1,18 @@
+#python imports
 from asyncio import Lock, run
 import logging, os
 from statistics import stdev
-from disnake import ApplicationCommandInteraction
-from disnake.ext import commands, tasks
-import database, images
 import glob
+#local imports
+import database, images
+from headpatBot import HeadpatBot
+#library imports
+from disnake import ApplicationCommandInteraction, File
+from disnake.ext import commands, tasks
+
 
 class StorageCog(commands.Cog):
-    def __init__(self,bot:commands.Bot):
+    def __init__(self,bot:HeadpatBot):
         self.bot=bot
         self.logger=logging.getLogger(os.environ['LOGGER_NAME'])
         self.lock=Lock()
@@ -64,13 +69,20 @@ class StorageCog(commands.Cog):
                 database.getGuildPickle(guildId).save()
 
 class TestCog(commands.Cog):
-    def __init__(self,bot:commands.Bot):
+    def __init__(self,bot:HeadpatBot):
         self.bot=bot
     #put test commands here
 
     @commands.slash_command()
     async def cache(self, inter:ApplicationCommandInteraction):
-        pass
+        await inter.response.defer()
+        server=self.bot.servers[inter.guild.id]
+        with open('info.txt','w') as file:
+            file.write(str(server))
+        database.storeGuildPickle(server)
+        with open('info.txt','rb') as fileRaw:
+            file=File(fileRaw,filename='info.txt')
+            await inter.send(f'storing',file=file)
 
     @commands.slash_command()
     async def ratings(self,inter):
