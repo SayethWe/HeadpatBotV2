@@ -61,6 +61,7 @@ class WaifuCog(commands.Cog):
         inter:ApplicationCommandInteraction,
         waifuData:WaifuData
     ):
+        await inter.response.defer()
         name=waifuData.name
         source=waifuData.source
         image = images.loadPollImage(images.sourceNameFolder(name,source))
@@ -80,7 +81,7 @@ class WaifuCog(commands.Cog):
                 claimer = await self.bot.getch_user(serverSide.claimer)
                 footer_text=self.bot.getResponse('WAIFU.SHOW.FOOTER.CLAIMED',serverSide.rating,claimer.display_name)
             embed.set_footer(text=footer_text)
-        await self.bot.response(inter,'WAIFU.SHOW.PASS',embed=embed)
+        await self.bot.respond(inter,'WAIFU.SHOW.PASS',embed=embed)
 
     @waifu.sub_command(
         description="get a list of waifus, either in this server, or available for pulls"
