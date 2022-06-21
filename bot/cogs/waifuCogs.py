@@ -119,7 +119,7 @@ class WaifuCog(commands.Cog):
                 reply = self.bot.getResponse('WAIFU.LIST.DIFFERENCE',count)
         with open('Waifus.txt','rb') as waifuList:
             file = File(waifuList, filename='Waifus.txt')
-            await self.bot.send(reply,file=file,ephemeral=True)
+            await self.bot.send(inter,reply,file=file,ephemeral=True)
 
 class GachaCog(commands.Cog):
     def __init__(self,bot:HeadpatBot):
