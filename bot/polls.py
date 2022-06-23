@@ -1,3 +1,5 @@
+import logging, os
+from enum import Enum
 import numpy as np
 import matplotlib.pyplot  as plt
 from numpy.random import default_rng
@@ -5,15 +7,19 @@ from disnake.ui import Button, View
 from disnake import ButtonStyle
 from disnake.ui import Button
 from disnake import ButtonStyle, MessageInteraction
-from disnake.ext.commands import Bot
 from headpatExceptions import InsufficientOptionsError
-import responder
+
+logger = logging.getLogger(os.environ['LOGGER_NAME'])
 
 class Waifu():
+    """
+    A server-side Waifu
+    """
     def __init__(self,name:str,source:str,rating:int):
         self.name=name
         self.source=source
         self.rating=rating
+        self._claimer=0
 
     def __repr__(self):
         return f'{self.name} is a waifu from {self.source} with a rating of {self.rating}'
@@ -21,9 +27,29 @@ class Waifu():
     def updateRating(self,delta:int):
         self.rating+=delta
 
-class Poll():
+    @property
+    def claimer(self) -> int|None:
+        try:
+            self._claimer 
+        except AttributeError:
+            self._claimer=0 #more backwards compatibility code
+        return self._claimer
 
+    def claim(self,claimer:int):
+        self._claimer=claimer
+
+class Poll:
+    """
+    A single poll object, that handles creation, voting backend, and end calculation
+    """
     rng=default_rng()
+    VOTING_TICKETS = 2
+
+    class BUTTON_RESULTS(Enum):
+        VOTE_ADD=0
+        VOTE_REMOVE=1
+        CONFIRM=2
+        CLOSED=3
 
     def __init__(self,messageId:int,size:int):
         self.messageId=messageId
@@ -32,6 +58,7 @@ class Poll():
         self.waifus=list[Waifu]()
         self.ratings=list[int]()
         self.votes=np.zeros(shape=size,dtype=np.int64)
+        self.voters=[list[int]() for _ in range(size)]
         self.size = size
         
     def addVote(self,index:int):
@@ -58,28 +85,61 @@ class Poll():
             self.waifus.append(choice)
         return (names,sources)
         
-    def endPoll(self,bot:Bot): #TODO: maybe take in an inter from commandclose, but if none, do autoclose stuff?
-        self.open=False
+    def endPoll(self): #TODO: maybe take in an inter from commandclose, but if none, do autoclose stuff?
         #TODO: Figure out how to get the original message, and edit it. get_message returned none, and no equivalent fetch seems to exist.
         #fetching a message may actually require the see_messages permissions - is this worth askign for another perm?
         #update waifus
         if not self.users:
             # no one participated
-            return
-        ratingChanges = self.ratingChanges()
+            self.open=False
+            logger.debug('Unparticipated poll')
+            return {}
+        ratingChanges = self.ratingChanges() #determine how much the ratings change
+        #for each waifu in the poll
         for i in range(self.size):
+            #remove any users who didn't confirm
+            self.voters[i]=set(self.users).intersection(self.voters[i])
+            #set total votes to be the length
+            self.votes[i]=len(self.voters[i])
+            #update the ratings
             self.waifus[i].updateRating(ratingChanges[i])
+        #for each user who voted
+        awardPoints=dict[int,int]()
+        for userId in self.users:
+            #award points
+            amt=Poll.VOTING_TICKETS
+            awardPoints[userId]=amt
+        self.open=False #after everything is done, close the poll, so if we error, it stays open.
+        return awardPoints
 
     def countVotes(self):
         return len(self.users)
 
-    def createPollView(self, names:list[str],sources:list[str]):
-        view = View(timeout=None)
-        for i in range(len(names)):
-            button = VoteButton(names[i],sources[i],i,self)
-            view.add_item(button)
-        view.add_item(ConfirmButton(self))
-        return view
+    def createPollButtons(self,pollInd:int,names:list[str],sources:list[str]):
+        buttons:list[Button]=[None]*(self.size+1)
+        for i in range(self.size):
+            buttons[i] = Button(style=ButtonStyle.blurple,label=f'{names[i]}|{sources[i]}',custom_id=f'poll|{self.messageId}|{pollInd}|{i}')
+        buttons[-1]=Button(style=ButtonStyle.green,label='Confirm',custom_id=f'poll|{self.messageId}|{pollInd}|Confirm')
+        return buttons
+
+    def doVote(self,userid:int,voteInd:int):
+        if userid in self.users or not self.open: #poll won't take their vote
+            return Poll.BUTTON_RESULTS.CLOSED
+        elif userid not in self.voters[voteInd]: #user hasn't voted for this - add vote
+            self.voters[voteInd].append(userid)
+            self.addVote(voteInd)
+            return Poll.BUTTON_RESULTS.VOTE_ADD
+        else: #user is cancelling a vote
+            self.voters[voteInd].remove(userid)
+            self.cancelVote(voteInd)
+            return Poll.BUTTON_RESULTS.VOTE_REMOVE
+
+    def doConfirm(self,userid:int):
+        if userid in self.users or not self.open:
+            return Poll.BUTTON_RESULTS.CLOSED
+        #TODO lock vote buttons by user, which cannot be done yet.
+        self.confirmVotes(userid)
+        return Poll.BUTTON_RESULTS.CONFIRM
 
     def performancePlot(self,ax:plt.Axes):
         expectation=Poll.cubicSigmoid(self.ratings)
@@ -98,6 +158,45 @@ class Poll():
         ax.set_xlabel("Number of Votes")
         ax.set_ylabel("Occurence Count")
         ax.set_title("Votes by Waifu")
+    
+    def resultsTable(self,ax:plt.Axes):
+        logger.debug(self.votes)
+        firstPlace=np.argmax(self.votes)
+        worstPlace=np.argmin(self.votes)
+        deltaR=self.ratingChanges()
+        largestGain=np.argmax(deltaR)
+        largestLoss=np.argmin(deltaR)
+        results=[
+            [self.waifus[firstPlace].name,self.votes[firstPlace]],
+            [self.waifus[largestGain].name,deltaR[largestGain]],
+            [self.waifus[worstPlace].name,self.votes[worstPlace]],
+            [self.waifus[largestLoss].name,deltaR[largestLoss]]]
+        logger.debug(results)
+        ax.axis('tight')
+        t=ax.table(
+            cellText=results,
+            colLabels=("waifu","value"),
+            rowLabels=("First","Gain","Last","Loss"),
+            loc='center',
+            colWidths=(0.6,0.2)
+        )
+        t.auto_set_font_size(False)
+        t.set_fontsize(12)
+        #t.scale(1,2)
+        ax.axis('off')
+        ax.set_title("Special Mentions")
+
+    def resultsText(self):
+        firstPlace=np.argmax(self.votes)
+        worstPlace=np.argmax(self.votes)
+        dRating=self.ratingChanges()
+        largestGain=np.argmax(dRating)
+        largestLoss=np.argmin(dRating)
+        results=[
+            [self.votes[firstPlace],self.waifus[firstPlace].name,self.waifus[firstPlace].source],
+            [dRating[largestGain],self.waifus[largestGain].name,self.waifus[largestGain].source],
+            [self.votes[worstPlace],self.waifus[worstPlace].name,self.waifus[worstPlace].source],
+            [dRating[largestLoss],self.waifus[largestLoss].name,self.waifus[largestLoss].source]]
 
     @staticmethod
     def selectPoll(pollSize:int,ratings:np.ndarray[int, np.dtype[np.int64]]):
@@ -167,39 +266,5 @@ class Poll():
         else:
             return np.zeros_like(data)
 
-class VoteButton(Button):
-    def __init__(self, name:str, source:str,index:int,poll:Poll):
-        self.selected = False
-        self.name=name
-        self.poll=poll
-        self.index=index
-        self.users=list[int]()
-        super().__init__(style=ButtonStyle.blurple,label=f'{name}|{source}')
-
-    async def callback(self, button_inter : MessageInteraction):
-        user=button_inter.author.id
-        if user in self.poll.users or not self.poll.open:
-            await button_inter.send(responder.getResponse('WAIFU.POLL.VOTE.CLOSED'),ephemeral=True)
-        elif user not in self.users:
-            await button_inter.send(responder.getResponse('WAIFU.POLL.VOTE.ADD',self.name),ephemeral=True)
-            self.users.append(user)
-            self.poll.addVote(self.index)
-        else:
-            await button_inter.send(responder.getResponse('WAIFU.POLL.VOTE.REMOVE',self.name),ephemeral=True)
-            self.users.remove(user)
-            self.poll.cancelVote(self.index)
-
-class ConfirmButton(Button):
-
-    def __init__(self,poll:Poll):
-        self.poll=poll
-        super().__init__(style=ButtonStyle.green,label='confirm')
-
-    async def callback(self, button_inter: MessageInteraction):
-        user=button_inter.author
-        if user in self.poll.users or not self.poll.open:
-            await button_inter.send(responder.getResponse('WAIFU.POLL.VOTE.CLOSED'),ephemeral=True)
-            return
-        #TODO lock vote buttons by user, which cannot be done yet.
-        self.poll.confirmVotes(user.id)
-        await button_inter.send(responder.getResponse('WAIFU.POLL.VOTE.CONFIRM',user.name))
+    def __repr__(self) -> str:
+        return f'Poll with{vars(self)}'

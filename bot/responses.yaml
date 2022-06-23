@@ -1,4 +1,6 @@
 # Responses
+# n.b: if starting with an argument tag ({#}) or using a colon, surround text with quotes
+# Instances of [NEWLINE] are converted by responder.py to line breaks
 ACTIVITY:
   PLAYING:
     - with waifus while you're not looking
@@ -58,6 +60,11 @@ WAIFU: #waifu
   SHOW: #show
     PASS:
       - ding! Your waifu is ready!
+    FOOTER:
+      UNCLAIMED:
+        - 'Rating: {0}'
+      CLAIMED:
+        - 'Claimed by {1}[NEWLINE]Rating: {0}'
   REMOVE: #remove
     PASS:
       - Okay! {0} is gone. Less competition for me!
@@ -99,3 +106,12 @@ WAIFU: #waifu
       - Found {0} Waifus in your Server
     DIFFERENCE:
       - Global database has {0} waifus that you don't.
+TICKETS:
+  GET:
+    - You have {0} tickets
+GACHA:
+  ROLL:
+    INSUFFICIENT:
+      - You don't have enough tickets to roll that high.
+    SUCCESS:
+      - You've just obtained {0}!

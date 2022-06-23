@@ -60,6 +60,7 @@ _Future Feature_
 - [x] List Global Waifus
 - [x] **Prevent Poll from Running when not enough Waifus**
 - [ ] Use Server TileSize setting
+- [ ] Smarter Face detection
 
 ### Waifu Poll
 - [x] **start poll**
@@ -85,7 +86,9 @@ _Future Feature_
 ---
 ## Gacha Game  
 - [ ] _pull from server waifus_
-- [ ] _earn tickets for participating in polls_
+    - [ ] spend tickets to improve your waifus somehow
+- [x] _earn tickets for participating in polls_
+    - [ ] Earn tickets when your waifus are voted for by users other than you
 - [ ] _some kind of minigame?_
 
 ---

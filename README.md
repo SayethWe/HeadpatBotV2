@@ -20,22 +20,23 @@
 # Headpatbot
 
 A discord bot for headpats and rating waifus  
-1.x.x - old discord.py implementation
-2.x.x - slash commands
-3.x.x - Directory Refactoring
-4.x.x - Permissioning
-4.3.x - Voting Completion Announcement
+1.x.x - old discord.py implementation  
+2.x.x - slash commands  
+3.x.x - Directory Refactoring  
+4.x.x - Permissioning  
+5.x.x - Gacha game and Tickets
 
 
-[Add the bot to your server](https://discord.com/api/oauth2/authorize?client_id=807859649621524490&permissions=33792&scope=bot)  
-[Join the support server](https://discord.gg/yhQzBYqFZb)
+[Add the bot to your server](https://discord.com/oauth2/authorize?client_id=807859649621524490&permissions=33792&scope=applications.commands%20bot)  
+[Join the support server](https://discord.gg/yhQzBYqFZb)  
 [View the Source](https://github.com/SayethWe/HeadpatBotV2)
 
 ## Permissions
 #### Tested, Required
 Attach Files
 View Channel(s)
-#### Tested, not Required, Reccomended for safety
+Application Commands (Create Slash Commands in Server)
+#### Tested, not Required, Reccomended for safety with possible future features
 Send Messages
 #### Not Required, may be used in future
 Add Reactions
@@ -142,7 +143,7 @@ Contributions welcome, feel free to make pull requests.
 Licensed under the GPLv3.0 license. See LICENSE file.
 
 ## Credits
-LordOfEnnui#8710: V0 reddit bot, V1 Implementation and methodology consultation. 
+LordOfEnnui#8710: V0 reddit bot, V1 Implementation and methodology consultation.  
 Sayeth_We#0663: V1 Implementation, Equation Design, V2 Rewrite
 
 ## Self hosting
@@ -158,6 +159,7 @@ However, any self-hosted bots should make themselves obvious as such.
 `APPROVAL_CHANNEL`: Channel ID to get messages from the bot asking to approve suggested Waifus. Bot must have send permissions in this channel.
 `SHARE_CHANNEL`: Channel ID to send messages from the bot when a new waifu is approved. Bot must have send permissions in this channel.
 `DATABASE_URL`:Credentials link to a postgresql database for storing data. Theoretically optional when not using Heroku. Not using it has not been tested since implemented.
+`LOGS_HOOK`: A discord webhook to send Critical, Error, and Warning logs to. Optional.
 
 #### Launch File:
 Assuming The Environment Variables are set up, running `headpatbot.py` will start the bot and connect to discord automatically.

@@ -1,1 +1,1 @@
-anythingelse: python bot/headpatBot.py
+anythingelse: python bot/runBot.py

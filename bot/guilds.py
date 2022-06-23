@@ -1,12 +1,12 @@
+from __future__ import annotations #allows factory type annotations
 from enum import Enum
 import os, logging
 import images
 import pickle
 from polls import Poll, Waifu
-from headpatExceptions import WaifuDNEError,WaifuConflictError
+from headpatExceptions import WaifuDNEError,WaifuConflictError,InsufficientOptionsError
 import matplotlib.pyplot as plt
-
-servers=list()
+import numpy as np
 
 SAVE_FOLDER = os.path.join('guilds')
 if not os.path.exists(SAVE_FOLDER):
@@ -14,7 +14,6 @@ if not os.path.exists(SAVE_FOLDER):
 logger = logging.getLogger(os.environ['LOGGER_NAME'])
 
 class Server:
-
     class ServerOption(Enum):
         PollWaifuCount='pollSize' #how many waifus to put in a poll
         PollParticipationCheckStartHours='pollCheckZero' #when to start checking for poll participations
@@ -41,6 +40,7 @@ class Server:
         self.waifus=list[Waifu]()
         self.polls=list[Poll]()
         self.options=Server.defaultOptions()
+        self.tickets=dict[int,int]
 
     def addWaifu(self,name:str,source:str):
         if os.path.exists(os.path.join(images.POLL_FOLDER,images.sourceNameFolder(name,source))):
@@ -66,7 +66,7 @@ class Server:
             pickle.dump(self,saveFile)
 
     @staticmethod
-    def load(identity:int):
+    def load(identity:int) -> Server:
         try:
             with open(os.path.join(SAVE_FOLDER,f'{identity}.p'),'rb') as loadFile:
                 loaded = pickle.load(loadFile)
@@ -90,13 +90,13 @@ class Server:
         try:
             return selectedWaifus[0]
         except IndexError:
-            return []
+            return None
 
     def getWaifuRatings(self):
         return list(map(lambda waifu: waifu.rating,self.waifus))
 
     def ratingsPlot(self,ax:plt.Axes):
-        ax.violinplot(self.getWaifuRatings())
+        ax.boxplot(self.getWaifuRatings())
         ax.set_ylabel("Waifu Rating")
         ax.set_title("Waifu Ratings")
 
@@ -105,6 +105,44 @@ class Server:
 
     def addPoll(self,poll:Poll):
         self.polls.append(poll)
+        return len(self.polls)-1
 
     def removePoll(self,poll:Poll):
         self.polls.remove(poll)
+    
+    def ensureTickets(self,user:int):
+        try:
+            self.tickets
+        except AttributeError:
+            self.tickets = dict[int,int]() #backwards compatibility code
+        if user not in self.tickets:
+            self.tickets[user]=0
+
+    def modifyTickets(self,user:int,delta:int):
+        self.ensureTickets(user)
+        oldTickets=self.tickets[user]
+        self.tickets[user] = oldTickets+delta
+
+    def getTickets(self,user:int) -> int:
+        self.ensureTickets(user)
+        return self.tickets[user]
+
+    def waifuRoll(self,userId:int,tickets:int) -> Waifu:
+        rng=np.random.default_rng()
+        #get available waifus and their ratings
+        available = [waifu for waifu in self.waifus if waifu.claimer == 0 and waifu.rating >= 0]
+        ratings=np.array([waifu.rating for waifu in available])
+        #generate pick probabilities
+        weights=np.mean(ratings)/((tickets-ratings)**2+1)+np.std(ratings)
+        p=weights/sum(weights) #as probabilities
+        try:
+            #pick one
+            choice = rng.choice(available,1,p=p)[0]
+            choice.claim(userId) #mark the waifu claimed
+        except ValueError:
+            #error means there are no unclaimed left
+            raise InsufficientOptionsError
+        return choice
+
+    def claimedWaifus(self,userId:int) -> list[Waifu]:
+        return [waifu for waifu in self.waifus if waifu.claimer == userId]
