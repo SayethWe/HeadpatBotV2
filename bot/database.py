@@ -27,13 +27,12 @@ async def doCommandReturn(command:str,*args):
     await conn.close()
     return result
 
-async def doCommand(command:str,*args) -> db.Record|None:
+async def doCommand(command:str,*args):
     if not enabled:
         return None
     conn:db.connection.Connection = await db.connect(link)
-    result = await conn.execute(command,*args)
+    await conn.execute(command,*args)
     await conn.close()
-    return result
 
 async def createTables():
     cmdStrings=(
