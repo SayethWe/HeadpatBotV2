@@ -1,7 +1,7 @@
 from guilds import Server
 import asyncpg as db
 import qoi
-import os, pickle
+import os, pickle, asyncio
 
 IGNORE_DATABASE_ENVVAR='NO_DATABASE'
 link = os.environ['DATABASE_URL']
@@ -11,87 +11,77 @@ if link == IGNORE_DATABASE_ENVVAR:
     enabled = False
 
 
-#connection = db.connect(database="postgres",user="postgres",host="127.0.0.1",port="5432")
-def doCommandReturnAll(command:str,*args):
+async def doCommandReturnAll(command:str,*args):
     if not enabled:
         return None
-    conn = db.connect(link)
-    cur = conn.cursor()
-    execStr = command.format(*args)
-    #print(execStr)
-    cur.execute(execStr)
-    conn.commit()
-    result = cur.fetchall()
-    result = [subres[0] for subres in result]
-    cur.close()
-    conn.close()
+    conn:db.connection.Connection = await db.connect(link)
+    result = await conn.fetch(command,*args)
+    await conn.close()
     return result
 
-def doCommandReturn(command:str,*args):
+async def doCommandReturn(command:str,*args):
     if not enabled:
         return None
-    conn = db.connect(link)
-    cur = conn.cursor()
-    execStr = command.format(*args)
-    cur.execute(execStr)
-    conn.commit()
-    result = cur.fetchone()[0]
-    conn.close()
+    conn:db.connection.Connection = await db.connect(link)
+    result = await conn.fetchrow(command,*args)
+    await conn.close()
     return result
 
-def doCommand(command:str,*args):
+async def doCommand(command:str,*args) -> db.Record|None:
     if not enabled:
         return None
-    conn = db.connect(link)
-    conn.execute(command,*args)
-    conn.close()
+    conn:db.connection.Connection = await db.connect(link)
+    result = await conn.execute(command,*args)
+    await conn.close()
+    return result
 
-def createTables():
+async def createTables():
     cmdStrings=(
         "CREATE TABLE IF NOT EXISTS guilds(id BIGINT PRIMARY KEY, data BYTEA)", 
         "CREATE TABLE IF NOT EXISTS waifus(name TEXT, source TEXT, data BYTEA, hash BIGINT UNIQUE)"
     )
     for cmdString in cmdStrings:
-        doCommand(cmdString)
+        await doCommand(cmdString)
 
-def getGuildPickle(guildId:int) -> Server:
-    cmdString="SELECT data FROM guilds WHERE id ={0}"
-    pickle_string = doCommandReturn(cmdString,guildId)
-    return pickle.loads(pickle_string.tobytes())
+async def getGuildPickle(guildId:int) -> Server:
+    cmdString="SELECT data FROM guilds WHERE id =$1"
+    pickle_string = await doCommandReturn(cmdString,guildId)
+    return pickle.loads(pickle_string.get('data'))
 
-def storeGuildPickle(guild:Server):
-    cmdString = """INSERT INTO guilds (id, data) VALUES ({0},{1})
+async def storeGuildPickle(guild:Server):
+    cmdString = """INSERT INTO guilds (id, data) VALUES ($1 ,$2)
     ON CONFLICT (id) DO UPDATE
     SET data = excluded.data
     """
     pickle_bytes = pickle.dumps(guild)
-    doCommand(cmdString,guild.identity,db.Binary(pickle_bytes))
+    await doCommand(cmdString,guild.identity,pickle_bytes)
 
-def storeWaifu(name:str,source:str,image,imageHash:int):
-    cmdString = "INSERT INTO waifus (name,source,data,hash) VALUES ('{0}','{1}',{2},{3}) ON CONFLICT DO NOTHING"
+async def storeWaifu(name:str,source:str,image,imageHash:int):
+    cmdString = "INSERT INTO waifus (name,source,data,hash) VALUES ($1,$2,$3,$4) ON CONFLICT DO NOTHING"
     data = qoi.encode(image)
-    doCommand(cmdString,name,source,db.Binary(data),imageHash)
+    await doCommand(cmdString,name,source,data,imageHash)
 
-def storeWaifuFile(name:str,source:str,imagePath:str,imageHash:int):
-    storeWaifu(name,source,qoi.read(imagePath),imageHash)
+async def storeWaifuFile(name:str,source:str,imagePath:str,imageHash:int):
+    await storeWaifu(name,source,qoi.read(imagePath),imageHash)
 
-def loadWaifu(imageHash:int):
-    cmdString = "SELECT data FROM waifus WHERE hash = '{0}'"
-    image = doCommandReturn(cmdString,imageHash)
-    return qoi.decode(image.tobytes())
+async def loadWaifu(imageHash:int):
+    cmdString = "SELECT data FROM waifus WHERE hash = $1"
+    image = await doCommandReturn(cmdString,imageHash)
+    return qoi.decode(image.get('data'))
 
-def getWaifuHashes(name:str,source:str):
-    cmdString = "SELECT hash FROM waifus WHERE name = '{0}' AND source = '{1}'"
-    return doCommandReturnAll(cmdString,name,source)
+async def getWaifuHashes(name:str,source:str):
+    cmdString = "SELECT hash FROM waifus WHERE name = $1 AND source = $2"
+    waifuHashes=await doCommandReturnAll(cmdString,name,source)
+    return [waifuHash.get('hash') for waifuHash in waifuHashes]
 
-def getAllWaifus():
-    cmdString = "SELECT (name,source) FROM waifus"
-    allData = doCommandReturnAll(cmdString)
-    return [(datum.split(',')[0][1:].replace('"',''),datum.split(',')[1][:-1].replace('"','')) for datum in allData]
+async def getAllWaifus():
+    cmdString = "SELECT name,source FROM waifus"
+    allData = await doCommandReturnAll(cmdString)
+    return [(datum.get('name'),datum.get('source')) for datum in allData]
 
-def getAllGuilds():
+async def getAllGuilds():
     cmdString = "SELECT id FROM guilds"
-    allData = doCommandReturnAll(cmdString)
-    return allData
+    allData = await doCommandReturnAll(cmdString)
+    return [datum.get('id') for datum in allData]
 
-createTables()
+asyncio.get_event_loop().run_until_complete(createTables())

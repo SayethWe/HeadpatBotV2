@@ -80,7 +80,7 @@ async def on_ready(): #events to fire on a sucessful reconnection
     logger.info(f"Logging in as {bot.user}")
     for guild in bot.guilds:
         try:
-            servers[guild.id] = database.getGuildPickle(guild.id)
+            servers[guild.id] = await database.getGuildPickle(guild.id)
         except (UnpicklingError, TypeError):
             servers[guild.id]=guilds.Server.load(guild.id)
         logger.info(f"loading server {guild.name} with id {guild.id}")
@@ -439,11 +439,11 @@ class StorageCog(commands.Cog):
     async def storeDatabase(self):
         logger.info('Saving filesystem to database')
         for server in servers.values():
-            database.storeGuildPickle(server)
+            await database.storeGuildPickle(server)
         for waifuImage in glob.glob('*/*/*.qoi',root_dir=images.POLL_FOLDER):
             waifuData=waifuImage.split('/')
             imagePath=os.path.join(images.POLL_FOLDER,waifuImage)
-            database.storeWaifuFile(waifuData[1],waifuData[0],imagePath,int(waifuData[2].replace('.qoi','')))
+            await database.storeWaifuFile(waifuData[1],waifuData[0],imagePath,int(waifuData[2].replace('.qoi','')))
 
     @storeDatabase.before_loop
     @storeFiles.before_loop
@@ -453,17 +453,18 @@ class StorageCog(commands.Cog):
     @tasks.loop(hours=6)
     async def loadFiles(self):
         logger.info('Fetching from Database to File System')
-        allWaifus=database.getAllWaifus()
+        allWaifus=await database.getAllWaifus()
         for waifu in allWaifus:
             name=waifu[0]
             source=waifu[1]
-            waifuHashes = database.getWaifuHashes(name,source)
+            waifuHashes = await database.getWaifuHashes(name,source)
             for waifuHash in waifuHashes:
-                waifuImage=database.loadWaifu(waifuHash)
+                waifuImage=await database.loadWaifu(waifuHash)
                 images.saveRawPollImage(waifuImage,waifuHash,images.sourceNameFolder(name,source))
-        allGuilds=database.getAllGuilds()
+        allGuilds=await database.getAllGuilds()
         for guildId in allGuilds:
-            database.getGuildPickle(guildId).save()
+            guild = await database.getGuildPickle(guildId)
+            guild.save()
 
 bot.add_cog(StorageCog(bot))
 bot.run(TOKEN)
