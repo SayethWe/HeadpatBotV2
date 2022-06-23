@@ -41,11 +41,11 @@ class StorageCog(commands.Cog):
         self.logger.info('Saving filesystem to database')
         async with self.lock:
             for server in self.bot.servers.values():
-                database.storeGuildPickle(server)
+                await database.storeGuildPickle(server)
             for waifuImage in glob.glob('*/*/*.qoi',root_dir=images.POLL_FOLDER):
                 waifuData=waifuImage.split('/')
                 imagePath=os.path.join(images.POLL_FOLDER,waifuImage)
-                database.storeWaifuFile(waifuData[1],waifuData[0],imagePath,int(waifuData[2].replace('.qoi','')))
+                await database.storeWaifuFile(waifuData[1],waifuData[0],imagePath,int(waifuData[2].replace('.qoi','')))
 
     @storeDatabase.before_loop
     @storeFiles.before_loop
@@ -56,17 +56,18 @@ class StorageCog(commands.Cog):
     async def loadFiles(self):
         async with self.lock:
             self.logger.info('Fetching from Database to File System')
-            allWaifus=database.getAllWaifus()
+            allWaifus=await database.getAllWaifus()
             for waifu in allWaifus:
                 name=waifu[0]
                 source=waifu[1]
-                waifuHashes = database.getWaifuHashes(name,source)
+                waifuHashes = await database.getWaifuHashes(name,source)
                 for waifuHash in waifuHashes:
-                    waifuImage=database.loadWaifu(waifuHash)
+                    waifuImage=await database.loadWaifu(waifuHash)
                     images.saveRawPollImage(waifuImage,waifuHash,images.sourceNameFolder(name,source))
-            allGuilds=database.getAllGuilds()
+            allGuilds=await database.getAllGuilds()
             for guildId in allGuilds:
-                database.getGuildPickle(guildId).save()
+                guild = await database.getGuildPickle(guildId)
+                guild.save()
 
 class TestCog(commands.Cog):
     def __init__(self,bot:HeadpatBot):
@@ -79,7 +80,7 @@ class TestCog(commands.Cog):
         server=self.bot.servers[inter.guild.id]
         with open('info.txt','w') as file:
             file.write(str(server))
-        database.storeGuildPickle(server)
+        await database.storeGuildPickle(server)
         with open('info.txt','rb') as fileRaw:
             file=File(fileRaw,filename='info.txt')
             await inter.send(f'storing',file=file)
