@@ -28,6 +28,15 @@ def imageToBytes(image:Image.Image) -> io.BytesIO:
     bytes.seek(0)
     return bytes
 
+def bytesToArray(data:io.BytesIO):
+    image = Image.open(data)
+    array = np.array(image)
+    return array
+
+def arrayToBytes(array):
+    image=Image.fromarray(array)
+    return imageToBytes(image)
+
 def sourceNameFolder(name:str,source:str) -> str:
     return os.path.join(source,name)
 
@@ -40,8 +49,7 @@ def saveHeadpatImage(data:io.BytesIO) -> None:
     data: `filelike`
         bytestream image
     """
-    image = Image.open(data)
-    array = np.array(image)
+    array = bytesToArray(data)
     path = os.path.join(HEADPAT_FOLDER,f'{image.__hash__}.qoi')
     qoi.write(path,array)
 

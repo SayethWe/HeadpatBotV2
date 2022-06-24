@@ -1,7 +1,8 @@
 import os, logging
 from pickle import UnpicklingError
 import disnake
-from disnake import Interaction, ApplicationCommandInteraction, File
+from disnake import Interaction, ApplicationCommandInteraction, File, Webhook
+from disnake.abc import GuildChannel
 from disnake.ext import commands
 import yaml
 from numpy.random import default_rng
@@ -71,12 +72,12 @@ class HeadpatBot(commands.InteractionBot):
     ): #dump the README to the user
         await self.respond(inter,'HELP',file=File("README.md"),ephemeral=True)
 
-    async def respond(self,inter:Interaction,request:str,*args:str,**kwargs):
+    async def respond(self,sendable:Interaction|Webhook|GuildChannel,request:str,*args:str,**kwargs):
         reply=self.getResponse(request,*args)
-        await self.send(inter,reply,**kwargs)
+        await self.send(sendable,reply,**kwargs)
 
-    async def send(self,inter:Interaction,reply:str,**kwargs):
-        await inter.send(content=reply,**kwargs)
+    async def send(self,sendable:Interaction|Webhook|GuildChannel,reply:str,**kwargs):
+        await sendable.send(content=reply,**kwargs)
 
     def getResponse(self,request:str,*args:str):
         request=request.upper()

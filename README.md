@@ -156,10 +156,12 @@ However, any self-hosted bots should make themselves obvious as such.
 
 #### Environment Variables to use:
 `DISCORD_TOKEN`: The logon token for the bot account
-`APPROVAL_CHANNEL`: Channel ID to get messages from the bot asking to approve suggested Waifus. Bot must have send permissions in this channel.
-`SHARE_CHANNEL`: Channel ID to send messages from the bot when a new waifu is approved. Bot must have send permissions in this channel.
+`APPROVAL_CHANNEL`: Channel ID to get messages from the bot asking to approve suggested Waifus. Bot must have send message and attach file permissions in this channel.
+`ANNOUNCE_HOOK`: Webhook to send messages from the bot when a new waifu is approved.
 `DATABASE_URL`:Credentials link to a postgresql database for storing data. Theoretically optional when not using Heroku. Not using it has not been tested since implemented.
 `LOGS_HOOK`: A discord webhook to send Critical, Error, and Warning logs to. Optional.
+
+`TEST_ENV`: Guild ID(s) to test slash commands in
 
 #### Launch File:
 Assuming The Environment Variables are set up, running `headpatbot.py` will start the bot and connect to discord automatically.

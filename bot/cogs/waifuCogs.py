@@ -1,18 +1,52 @@
 #python imports
 import os, logging
-import glob
+import glob, io
+from aiohttp import ClientSession
 #local imports
 from injections import WaifuData
-import approval, images
+import images, database
 from headpatBot import HeadpatBot
 #library imports
-from disnake import ApplicationCommandInteraction, Embed, File, Attachment
+from disnake import ActionRow, ApplicationCommandInteraction, Embed, File, Attachment, MessageInteraction, Webhook, ButtonStyle
+from disnake.ui import Button
 from disnake.ext import commands
 
 class WaifuCog(commands.Cog):
     def __init__(self,bot:HeadpatBot):
         self.bot=bot
         self.logger=logging.getLogger(os.environ['LOGGER_NAME'])
+
+    @commands.Cog.listener(name="on_button_click")
+    async def pollVoteHandler(self,button_inter:MessageInteraction):
+        data = button_inter.component.custom_id.split('|')
+        if data[0] != 'approval':
+            return
+        await button_inter.response.defer()
+        #lock all the buttons
+        for component in button_inter.message.components:
+            self.logger.debug(component)
+            if isinstance(component, ActionRow):
+                for button in component.children:
+                    if isinstance(button, Button):
+                        button.disabled=True
+            if isinstance(component, Button):
+                component.disabled=True
+        (imageArray,name,source) = await database.removeApproval(int(data[1])) #we've interacted. remove the approval, and get the data
+        self.logger.debug(f'approving or denying {name}|{source}')
+        if data[2] == 'accept':
+            existingWaifu = images.saveRawPollImage(imageArray,int(data[1]),images.sourceNameFolder(name,source)) #throw into the filesystem
+            async with ClientSession() as session:
+                announceHook = Webhook.from_url(os.environ['ANNOUNCE_HOOK'],session=session,bot_token=os.environ['DISCORD_TOKEN'])
+                imageBytes = images.arrayToBytes(imageArray) #get image as bytes
+                imageBytes.seek(0)
+                attachment=File(imageBytes,filename=f'approved|{name}|{source}.png')
+                if existingWaifu:
+                    await self.bot.respond(announceHook,'WAIFU.ADD.ANNOUNCE.EXISTING',name,source,file = attachment)
+                else:
+                    await self.bot.respond(announceHook,'WAIFU.ADD.ANNOUNCE.NEW',name,source,file = attachment)
+            await self.bot.respond(button_inter,'WAIFU.ADD.APPROVE',name)
+        elif data[2] == 'reject':
+            await self.bot.respond(button_inter,'WAIFU.ADD.DENY',name)
 
     # Headpat
     @commands.slash_command(
@@ -49,7 +83,20 @@ class WaifuCog(commands.Cog):
             name=waifuData.name
             source=waifuData.source
             await self.bot.respond(inter,'WAIFU.ADD.WAIT') #tell the user it's in consideration
-            await approval.getWaifuApproval(self.bot,image,name,source) #send it off the the approval system
+            #send it off the the approval system
+            imageHash=hash(image)
+            imageBytes=io.BytesIO(await image.read())
+            sendAttachment=await image.to_file()
+            await database.addApproval(imageHash,images.bytesToArray(imageBytes),name,source)
+            acceptButton=Button(label='accept',style=ButtonStyle.green,custom_id=f'approval|{imageHash}|accept')
+            rejectButton=Button(label='reject',style=ButtonStyle.red,custom_id=f'approval|{imageHash}|reject')
+            #get the channel to approve in (needs to be channel because buttons)
+            announceChannel=self.bot.get_channel(os.environ['APPROVAL_CHANNEL'])
+            if announceChannel is None:
+                announceChannel = await self.bot.fetch_channel(os.environ['APPROVAL_CHANNEL'])
+            await self.bot.respond(announceChannel,'WAIFU.ADD.ASK',name,source,
+                components=[acceptButton,rejectButton],
+                file=sendAttachment)
         else:
             await self.bot.respond(inter,'WAIFU.ADD.NOT_IMAGE')
 

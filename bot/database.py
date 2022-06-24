@@ -1,3 +1,4 @@
+from pydoc import doc
 from guilds import Server
 import asyncpg as db
 import qoi
@@ -37,7 +38,8 @@ async def doCommand(command:str,*args):
 async def createTables():
     cmdStrings=(
         "CREATE TABLE IF NOT EXISTS guilds(id BIGINT PRIMARY KEY, data BYTEA)", 
-        "CREATE TABLE IF NOT EXISTS waifus(name TEXT, source TEXT, data BYTEA, hash BIGINT UNIQUE)"
+        "CREATE TABLE IF NOT EXISTS waifus(name TEXT, source TEXT, data BYTEA, hash BIGINT UNIQUE)",
+        "CREATE TABLE IF NOT EXISTS approvals(hash BIGINT PRIMARY KEY, data BYTEA, name TEXT, source TEXT)"
     )
     for cmdString in cmdStrings:
         await doCommand(cmdString)
@@ -83,4 +85,13 @@ async def getAllGuilds():
     allData = await doCommandReturnAll(cmdString)
     return [datum.get('id') for datum in allData]
 
-asyncio.get_event_loop().run_until_complete(createTables())
+async def addApproval(id:int,image,name:str,source:str):
+    cmdString = "INSERT INTO approvals (hash, data, name, source) VALUES ($1,$2,$3,$4) ON CONFLICT DO NOTHING"
+    await doCommand(cmdString,id,qoi.encode(image),name,source)
+
+async def removeApproval(id:int) -> tuple[bytes,str,str] :
+    cmdString="DELETE FROM approvals WHERE hash = $1 RETURNING data, name, source"
+    data = await doCommandReturn(cmdString,id)
+    return (qoi.decode(data.get('data')),data.get('name'),data.get('source'))
+
+asyncio.get_event_loop().run_until_complete(createTables()) #block until we ensure all tables are created
