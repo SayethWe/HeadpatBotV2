@@ -1,4 +1,4 @@
-import os, sys, logging
+import os, sys, logging, traceback
 from discord_webhook_logging import DiscordWebhookHandler
 
 os.environ['LOGGER_NAME']='disnake'
@@ -25,6 +25,16 @@ if 'LOGS_HOOK' in os.environ:
     whandler = DiscordWebhookHandler(webhook_url=os.environ['LOGS_HOOK'])
     whandler.setLevel('WARNING')
     logger.addHandler(whandler)
+
+#use logger on uncaught exceptions
+def log_uncaught_exceptions(type, value, trace):
+    for line in traceback.TracebackException(type,value,trace).format(chain=True):
+        logger.exception(line)
+    logging.exception(value)
+
+    sys.__excepthook__(type, value, trace) #call the default too
+
+sys.excepthook = log_uncaught_exceptions #override default hook to use the logger
 
 from headpatBot import HeadpatBot
 from cogs.pollCog import PollCog
