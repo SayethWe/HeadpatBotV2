@@ -91,7 +91,38 @@ get a list of all waifus available as a txt file
 `scope`: how large to search
 - Local: Server Only, includes the ratings of the waifus from polls
 - Global: All Waifus.
-- NotInServer: A list of all waifus in the global set that are not in the server. Essentially `Global` minus `Local`. 
+- NotInServer: A list of all waifus in the global set that are not in the server. Essentially `Global` minus `Local`.
+
+### /gacha
+Family of gacha-game related commands
+
+##### /gacha roll `spend`
+Roll a random unclaimed waifu from the server polls to collect
+
+`spend` : number of tickets to spend. More tickets tends to get higher rated waifus
+
+##### /gacha collection
+See which waifus you've rolled
+
+### /tickets
+Economy-based tickets
+
+##### /tickets get
+See how many tickets you have
+
+### /poll
+Family of poll-related commands
+
+##### /poll start
+Begins a waifu poll. Posts an image collage of selected waifus, and creates buttons for approval-based voting.
+
+##### /poll end
+Manually end the most recent poll and calculate results
+
+##### /poll result `pollNum`
+Show the results graphs from any poll run after 4.2.0
+
+`pollNum` : index of the poll to get, where 0 is the first poll in the server. Defaults to the most recent poll.
 
 ### /manageWaifus
 command family for managing server waifus. seperate command group to support command permissioning
@@ -114,20 +145,6 @@ remove a waifu from your server
 Pull multiple waifus simulatenously using a csv file
 
 `csv`: A comma-seperated-values file, where each line contains a (`name`,`source`) pair in the first two columns. Data in other columns will be ignored.
-
-### /poll
-Family of poll-related commands
-
-##### /poll start
-Begins a waifu poll. Posts an image collage of selected waifus, and creates buttons for approval-based voting.
-
-##### /poll end
-Manually end the most recent poll and calculate results
-
-##### /poll result `pollNum`
-Show the results graphs from any poll run after 4.2.0
-
-`pollNum` : index of the poll to get, where 0 is the first poll in the server. Defaults to the most recent poll.
 
 ## Todo
 See Todo.md, but high level:
@@ -161,7 +178,7 @@ However, any self-hosted bots should make themselves obvious as such.
 `DATABASE_URL`:Credentials link to a postgresql database for storing data. Theoretically optional when not using Heroku. Not using it has not been tested since implemented.
 `LOGS_HOOK`: A discord webhook to send Critical, Error, and Warning logs to. Optional.
 
-`TEST_ENV`: Guild ID(s) to test slash commands in
+`TEST_ENV`: Guild ID(s) to test slash commands in. Optional. Do not use in deployed environment.
 
 #### Launch File:
 Assuming The Environment Variables are set up, running `headpatbot.py` will start the bot and connect to discord automatically.
