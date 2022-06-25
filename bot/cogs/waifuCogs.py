@@ -113,7 +113,7 @@ class WaifuCog(commands.Cog):
         name=waifuData.name
         source=waifuData.source
         try:
-        image = images.loadPollImage(images.sourceNameFolder(name,source))
+            image = images.loadPollImage(images.sourceNameFolder(name,source))
         except WaifuDNEError:
             await self.bot.respond(inter,'WAIFU.ERROR.DNE',name,source)
             return
@@ -123,7 +123,7 @@ class WaifuCog(commands.Cog):
         embed.set_image(file=attachment)
         #check the server to see if we can add extra information
         try:
-        serverSide=self.bot.servers[inter.guild.id].getWaifuByNameSource(name,source)
+            serverSide=self.bot.servers[inter.guild.id].getWaifuByNameSource(name,source)
             #waifu exists in server
             #add rating and claim info
             if serverSide.claimer == 0:
