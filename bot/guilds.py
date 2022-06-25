@@ -90,7 +90,7 @@ class Server:
         try:
             return selectedWaifus[0]
         except IndexError:
-            return None
+            raise WaifuDNEError
 
     def getWaifuRatings(self):
         return list(map(lambda waifu: waifu.rating,self.waifus))

@@ -3,6 +3,7 @@ from PIL import Image, ImageOps, ImageDraw, ImageFont
 import numpy as np
 from numpy.random import default_rng
 import qoi
+from headpatExceptions import WaifuDNEError
 
 POLL_FOLDER=os.path.join('img','waifu')
 HEADPAT_FOLDER=os.path.join('img','headpat')
@@ -138,6 +139,8 @@ def loadPollImage(subfolder:str) -> Image.Image:
     folder = os.path.join(POLL_FOLDER,subfolder)
     pattern = os.path.join(folder,'*.qoi')
     matches = glob.glob(pattern)
+    if not matches:
+        raise WaifuDNEError
     #print(f'{pattern}\n matched by\n{matches}')
     filePath = rng.choice(matches)
     imageArray=qoi.read(filePath)

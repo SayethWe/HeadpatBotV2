@@ -2,6 +2,7 @@
 import os, logging
 import glob, io
 from aiohttp import ClientSession
+from headpatExceptions import WaifuDNEError
 #local imports
 from injections import WaifuData
 import images, database
@@ -17,7 +18,7 @@ class WaifuCog(commands.Cog):
         self.logger=logging.getLogger(os.environ['LOGGER_NAME'])
 
     @commands.Cog.listener(name="on_button_click")
-    async def pollVoteHandler(self,button_inter:MessageInteraction):
+    async def waifuApprovalHandler(self,button_inter:MessageInteraction):
         data = button_inter.component.custom_id.split('|')
         if data[0] != 'approval':
             return
@@ -111,14 +112,18 @@ class WaifuCog(commands.Cog):
         await inter.response.defer()
         name=waifuData.name
         source=waifuData.source
+        try:
         image = images.loadPollImage(images.sourceNameFolder(name,source))
+        except WaifuDNEError:
+            await self.bot.respond(inter,'WAIFU.ERROR.DNE',name,source)
+            return
         imageBytes = images.imageToBytes(image)
         attachment = File(imageBytes, filename = f'{name}.png')
         embed=Embed(title=waifuData)
         embed.set_image(file=attachment)
         #check the server to see if we can add extra information
+        try:
         serverSide=self.bot.servers[inter.guild.id].getWaifuByNameSource(name,source)
-        if serverSide:
             #waifu exists in server
             #add rating and claim info
             if serverSide.claimer == 0:
@@ -128,6 +133,8 @@ class WaifuCog(commands.Cog):
                 claimer = await self.bot.getch_user(serverSide.claimer)
                 footer_text=self.bot.getResponse('WAIFU.SHOW.FOOTER.CLAIMED',serverSide.rating,claimer.display_name)
             embed.set_footer(text=footer_text)
+        except WaifuDNEError:
+            pass #waifu did not exist serverside
         await self.bot.respond(inter,'WAIFU.SHOW.PASS',embed=embed)
 
     @waifu.sub_command(
