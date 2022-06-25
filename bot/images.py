@@ -49,7 +49,8 @@ def saveHeadpatImage(data:io.BytesIO) -> None:
     data: `filelike`
         bytestream image
     """
-    array = bytesToArray(data)
+    image = Image.open(data)
+    array = np.array(image)
     path = os.path.join(HEADPAT_FOLDER,f'{image.__hash__}.qoi')
     qoi.write(path,array)
 
