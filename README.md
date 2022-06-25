@@ -72,10 +72,14 @@ Command Family for waifu polls
 
 `waifu` supports autocomplete. It represents a waifu as stored in minimal folder structure. that is: `source material`/`waifu name`
 
-##### /waifu suggest `image waifu`
+##### /waifu suggest `image name source`
 Suggest a waifu for inclusion in the main waifu database, or a new image for an existing one.
 
 `image`: a discord attachment for the image to be used
+
+`name`: name of waifu to suggest. supports autocomplete. typing a source in this field will show existing waifus from that source
+
+`source`: source material of waifu to suggest, preffering series. supports autocomplete. typing a waifu name in this field will suggest known sources with that waifu
 
 ##### /waifu show `waifu`
 Shows an image of a waifu in the database. If the waifu has multiple images, which one to use is selected randomly.
