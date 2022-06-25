@@ -1,3 +1,4 @@
+from attr import s
 from disnake import ApplicationCommandInteraction
 import glob
 import images
@@ -28,19 +29,48 @@ async def waifu_autocomplete(
     valid = sorted(set([source for source in raw_list if input.title() in source]))
     return valid[:25]
 
-@dataclass
 class WaifuData:
-    name:str
-    source: str
+    def __init__(self,folderStructure:str):
+        self._name=folderStructure.split('/')[1]
+        self._source=folderStructure.split('/')[1]
+
+    @property
+    def name(self):
+        return self._name.title()
+
+    @property
+    def source(self):
+        return self._source.title()
+
+    def __repr__(self):
+        return f'{self.name}|{self.source}'
+
+@dataclass
+class NameSourceWaifu:
+    _name:str
+    _source: str
+
+    @property
+    def name(self):
+        return self._name.title()
+
+    @property
+    def source(self):
+        return self._source.title()
 
     def __repr__(self):
         return f'{self.name}|{self.source}'
 
 @commands.register_injection
 async def getWaifu(
-    inter:ApplicationCommandInteraction,
-#    name:str=commands.Param(autocomplete=name_autocomplete,description="Name of waifu"),
-#    source:str=commands.Param(autocomplete=source_autocomplete,description="Origin of Waifu")
     waifu:str=commands.Param(autocomplete=waifu_autocomplete,description="Waifu in source/name form")
 ) -> WaifuData:
     return WaifuData(waifu.split('/')[1].title(),waifu.split('/')[0].title())
+
+@commands.register_injection
+async def twoFieldWaifu(
+    inter:ApplicationCommandInteraction,
+    name:str=commands.Param(autocomplete=name_autocomplete,description="Name of waifu"),
+    source:str=commands.Param(autocomplete=source_autocomplete,description="Origin of Waifu")
+) -> NameSourceWaifu:
+    return NameSourceWaifu(name,source)

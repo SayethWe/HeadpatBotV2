@@ -4,7 +4,7 @@ import glob, io
 from aiohttp import ClientSession
 from headpatExceptions import WaifuDNEError
 #local imports
-from injections import WaifuData
+from injections import WaifuData, NameSourceWaifu
 import images, database
 from headpatBot import HeadpatBot
 #library imports
@@ -78,7 +78,7 @@ class WaifuCog(commands.Cog):
         self,
         inter:ApplicationCommandInteraction,
         image:Attachment, 
-        waifuData:WaifuData
+        waifuData:NameSourceWaifu
     ): #Sends a waifu to the approval channel
         if image.content_type.startswith('image'): #ensure it's actually an image
             name=waifuData.name
