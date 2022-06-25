@@ -70,19 +70,14 @@ Change your server options for polls
 ### /waifu
 Command Family for waifu polls
 
-`name` and `source` support autocomplete.  
-When Typing in a `name` field, typing a source will suggest waifus from that source.  
-When typing in a `source` field, typing a name will suggest sources that have waifus with that name
+`waifu` supports autocomplete. It represents a waifu as stored in minimal folder structure. that is: `source material`/`waifu name`
 
-`name`: The waifu's name
-
-`source`: the media from where the waifu originates. Series names preferred
-##### /waifu suggest `image name source`
+##### /waifu suggest `image waifu`
 Suggest a waifu for inclusion in the main waifu database, or a new image for an existing one.
 
 `image`: a discord attachment for the image to be used
 
-##### /waifu show `name source`
+##### /waifu show `waifu`
 Shows an image of a waifu in the database. If the waifu has multiple images, which one to use is selected randomly.
 
 ##### /waifu getList `scope`
@@ -127,18 +122,12 @@ Show the results graphs from any poll run after 4.2.0
 ### /manageWaifus
 command family for managing server waifus. seperate command group to support command permissioning
 
-`name` and `source` support autocomplete.  
-When Typing in a `name` field, typing a source will suggest waifus from that source.  
-When typing in a `source` field, typing a name will suggest sources that have waifus with that name
+`waifu` supports autocomplete. It represents a waifu as stored in minimal folder structure. that is: `source material`/`waifu name`
 
-`name`: The waifu's name
-
-`source`: the media from where the waifu originates. Series names preferred
-
-##### /manageWaifus pull `name source`
+##### /manageWaifus pull `waifu`
 Add a waifu from the master database to your server's waifupolls. Newly added waifus are always initialized with a rating of 1
 
-##### /manageWaifus remove `name source`
+##### /manageWaifus remove `waifu`
 remove a waifu from your server
 
 ##### /manageWaifus pullCSV `csv`

@@ -20,6 +20,14 @@ async def name_autocomplete(
     valid = sorted(set([source.split('/')[1] for source in raw_list if input.title() in source]))
     return valid[:25]
 
+async def waifu_autocomplete(
+    inter:ApplicationCommandInteraction,
+    input:str
+):
+    raw_list = glob.glob('*/*',root_dir=images.POLL_FOLDER)
+    valid = sorted(set([source for source in raw_list if input.title() in source]))
+    return valid[:25]
+
 @dataclass
 class WaifuData:
     name:str
@@ -31,7 +39,8 @@ class WaifuData:
 @commands.register_injection
 async def getWaifu(
     inter:ApplicationCommandInteraction,
-    name:str=commands.Param(autocomplete=name_autocomplete,description="Name of waifu"),
-    source:str=commands.Param(autocomplete=source_autocomplete,description="Origin of Waifu")
+#    name:str=commands.Param(autocomplete=name_autocomplete,description="Name of waifu"),
+#    source:str=commands.Param(autocomplete=source_autocomplete,description="Origin of Waifu")
+    waifu:str=commands.Param(autocomplete=waifu_autocomplete,description="Waifu in source/name form")
 ) -> WaifuData:
-    return WaifuData(name.title(),source.title())
+    return WaifuData(waifu.split('/')[1].title(),waifu.split('/')[0].title())
