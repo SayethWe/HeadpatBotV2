@@ -11,3 +11,4 @@ headpatTestEnv.py
 discord.log
 Waifus.txt
 failedList*.txt
+bot/testing.py

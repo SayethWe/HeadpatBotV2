@@ -2,6 +2,7 @@ import logging, os
 from enum import Enum
 import numpy as np
 import matplotlib.pyplot  as plt
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 from numpy.random import default_rng
 from disnake.ui import Button, View
 from disnake import ButtonStyle
@@ -44,6 +45,7 @@ class Poll:
     """
     rng=default_rng()
     VOTING_TICKETS = 2
+    MAX_RATING_CHANGE = 8
 
     class BUTTON_RESULTS(Enum):
         VOTE_ADD=0
@@ -144,7 +146,7 @@ class Poll:
     def performancePlot(self,ax:plt.Axes):
         expectation=Poll.cubicSigmoid(self.ratings)
         actual=Poll.cubicSigmoid(self.votes)
-        ax.plot(expectation,actual,'r*')
+        ax.plot(expectation,actual,'kX')
         ax.plot([-1,1],[-1,1],'b:')
         ax.set_xlim([-1,1])
         ax.set_xlabel("Expected Performance")
@@ -153,6 +155,18 @@ class Poll:
         ax.set_aspect('equal')
         ax.set_title("Performance")
 
+    @staticmethod
+    def ratingCountour(ax:plt.Axes,fig):
+        lin=np.linspace(-1,1,20)
+        x,y=np.meshgrid(lin,lin)
+        z=Poll.cubicSigmoid(y-x,Poll.MAX_RATING_CHANGE)
+        levels=np.arange(-Poll.MAX_RATING_CHANGE,Poll.MAX_RATING_CHANGE+1) #define levels for contours
+        cs=ax.contourf(x,y,z,levels,cmap=plt.get_cmap('RdYlGn')) #create the contours, return the contourset
+        #create a colorbar
+        div=make_axes_locatable(ax)
+        cax=div.append_axes('right',size='5%',pad=0.05) #make room for the colorbar
+        fig.colorbar(cs,cax=cax,orientation='vertical') #create the bar from the contourset
+        
     def voteHistogram(self,ax:plt.Axes):
         ax.hist(self.votes,bins=range(0,len(self.users)+2),align='left')
         ax.set_xlabel("Number of Votes")
@@ -229,10 +243,14 @@ class Poll:
         expectation = Poll.cubicSigmoid(self.ratings)
         actual=Poll.cubicSigmoid(self.votes)
         diff=actual-expectation
-        return np.around(diff*diff*diff)
+        np.append(diff,[-2,2]) #make sure we have the extreme possible values so we don't get different adjustments
+        changes=Poll.cubicSigmoid(diff,magnitude=Poll.MAX_RATING_CHANGE)
+        changes=changes[:-2] #remove the extremes we added before
+        #return np.around(diff*diff*diff)
+        return np.around(changes)
 
     @staticmethod
-    def quadraticClamp(data):
+    def quadraticClamp(data) -> np.ndarray:
         #clamp data. based on f(R_max-R_bar)=1;f(R_min-R_bar)=-1,d/d(R-R_bar)f(R_max-R_bar)=1
         #this means that the maximum distance above the centering metric goes to 1
         #the maximum distance below the centering metric goes to -1
@@ -252,7 +270,7 @@ class Poll:
             return np.zeros_like(data)
     
     @staticmethod
-    def cubicSigmoid(data):
+    def cubicSigmoid(data,magnitude:int=1) -> np.ndarray:
         data=np.array(data)
         X_max=np.max(data)
         X_min=np.min(data)
@@ -262,7 +280,7 @@ class Poll:
             b=6*(X_max+X_min)
             c=-12*X_max*X_min
             d=3*(X_max*X_max*X_min+X_max*X_min*X_min)-X_max*X_max*X_max-X_min*X_min*X_min
-            return (a*data*data*data+b*data*data+c*data+d)/denom
+            return magnitude*(a*data*data*data+b*data*data+c*data+d)/denom
         else:
             return np.zeros_like(data)
 

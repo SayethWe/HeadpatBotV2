@@ -131,6 +131,7 @@ class PollCog(commands.Cog):
         fig,axs = plt.subplots(2,2,squeeze=False,figsize=(8,8))
         poll.voteHistogram(axs[0,0])
         poll.performancePlot(axs[0,1])
+        Poll.ratingCountour(axs[0,1],fig)
         pollGuild.ratingsPlot(axs[1,0])
         poll.resultsTable(axs[1,1])
         fig.suptitle("Waifu poll results")
