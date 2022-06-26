@@ -23,15 +23,8 @@ class WaifuCog(commands.Cog):
         if data[0] != 'approval':
             return
         await button_inter.response.defer()
-        #lock all the buttons
-        for component in button_inter.message.components:
-            self.logger.debug(component)
-            if isinstance(component, ActionRow):
-                for button in component.children:
-                    if isinstance(button, Button):
-                        button.disabled=True
-            if isinstance(component, Button):
-                component.disabled=True
+        #remove all the buttons
+        await button_inter.edit_original_message(components=None)
         (imageArray,name,source) = await database.removeApproval(int(data[1])) #we've interacted. remove the approval, and get the data
         self.logger.debug(f'approving or denying {name}|{source}')
         if data[2] == 'accept':
