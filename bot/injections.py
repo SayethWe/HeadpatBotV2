@@ -32,7 +32,7 @@ async def waifu_autocomplete(
 class WaifuData:
     def __init__(self,folderStructure:str):
         self._name=folderStructure.split('/')[1]
-        self._source=folderStructure.split('/')[1]
+        self._source=folderStructure.split('/')[0]
 
     @property
     def name(self):
@@ -65,7 +65,7 @@ class NameSourceWaifu:
 async def getWaifu(
     waifu:str=commands.Param(autocomplete=waifu_autocomplete,description="Waifu in source/name form")
 ) -> WaifuData:
-    return WaifuData(waifu.split('/')[1].title(),waifu.split('/')[0].title())
+    return WaifuData(waifu)
 
 @commands.register_injection
 async def twoFieldWaifu(
