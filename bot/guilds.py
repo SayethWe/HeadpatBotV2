@@ -45,20 +45,20 @@ class Server:
     def addWaifu(self,name:str,source:str):
         if os.path.exists(os.path.join(images.POLL_FOLDER,images.sourceNameFolder(name,source))):
             #full database has waifu
-            if not self.getWaifuByNameSource(name,source):
-                #server does not have waifu
-                self.waifus.append(Waifu(name,source,1))
-            else:
+            try:
+                self.getWaifuByNameSource(name,source)
                 raise WaifuConflictError
+            except WaifuDNEError:
+                #server does not have waifu
+                newWaifu = Waifu(name,source,1)
+                self.waifus.append(newWaifu)
+                return newWaifu
         else:
             raise WaifuDNEError
     
     def removeWaifu(self,name:str,source:str):
         toRemove=self.getWaifuByNameSource(name,source)
-        if not toRemove:
-            raise WaifuDNEError
-        else:
-            self.waifus.remove(toRemove)
+        self.waifus.remove(toRemove)
 
     def save(self):
         filePath=os.path.join(SAVE_FOLDER,f'{self.identity}.p')
