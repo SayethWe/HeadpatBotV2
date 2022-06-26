@@ -13,7 +13,7 @@ from guilds import Server
 class HeadpatBot(commands.InteractionBot):
     def __init__(self,*args,**kwargs):
         self.logger=logging.getLogger(os.environ['LOGGER_NAME'])
-        with open(os.path.join("bot","responses.yaml"),"r") as file:
+        with open(os.path.join("data","responses.yaml"),"r") as file:
             try:
                 self.responses = yaml.safe_load(file)
             except yaml.YAMLError as err:

@@ -9,7 +9,7 @@ from headpatBot import HeadpatBot
 #library imports
 from disnake import ApplicationCommandInteraction, File
 from disnake.ext import commands, tasks
-
+import yaml
 
 class StorageCog(commands.Cog):
     def __init__(self,bot:HeadpatBot):
@@ -68,6 +68,39 @@ class StorageCog(commands.Cog):
             for guildId in allGuilds:
                 guild = await database.getGuildPickle(guildId)
                 guild.save()
+
+class HelpCog(commands.Cog):
+    bufferLimit = 1750 #how many characters before we force dump
+    with open(os.path.join("data","help.yaml"),"r") as file:
+        try:
+            helpOptions:dict[str,list[str]]=yaml.safe_load(file)
+        except yaml.YAMLError as err:
+            helpOptions = {'HelpFailure':['help failed to load']}
+            logging.getLogger(os.environ['LOGGER_NAME']).error(err)
+
+    def __init__(self,bot:HeadpatBot):
+        self.bot=bot
+        self.logger=logging.getLogger(os.environ['LOGGER_NAME'])
+
+    @commands.slash_command()
+    async def help(
+        self,
+        inter:ApplicationCommandInteraction,
+        query:str = commands.Param(choices=[option for option in helpOptions])
+    ):
+        sendBuffer = ""
+        for line in HelpCog.helpOptions[query]:
+            bufferLen = len(sendBuffer)
+            lineLen = len(line)
+            if bufferLen + lineLen > HelpCog.bufferLimit:
+                #send buffer, reset
+                await inter.send(sendBuffer)
+                sendBuffer = ""
+            sendBuffer += line
+            sendBuffer += '\n'
+        #make sure we send everything
+        if len(sendBuffer)>0:
+            await inter.send(sendBuffer)
 
 class TestCog(commands.Cog):
     def __init__(self,bot:HeadpatBot):

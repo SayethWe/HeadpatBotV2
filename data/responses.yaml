@@ -1,6 +1,6 @@
 # Responses
 # n.b: if starting with an argument tag ({#}) or using a colon, surround text with quotes
-# Instances of [NEWLINE] are converted by responder.py to line breaks
+# Instances of [NEWLINE] are converted by responder to line breaks
 ACTIVITY:
   PLAYING:
     - with waifus while you're not looking

@@ -1,0 +1,21 @@
+QUICKSTART:
+  - getting started:
+  - get a headpat with `/headpat`
+  - use `/waifu show [waifu]` to see an image of a waifu known to the bot
+  - suggest a new waifu, or an image of an existing one, using `/waifu suggest [name] [source]` and attaching an image
+  - the `/managewaifus` commands can be used to add waifus known to the bot to your server. We reccomend making this command moderator-only.
+  - when you have sufficient waifus in the server, `/poll start` will create a poll for users to select which waifus they like. Once again, this is a good command to make moderator-only.
+  - close an open poll with `/poll close`, and view results of past polls with `/poll results [pollNumber]`
+  - view tickets earned fom poll participation with `/tickets get`
+  - spend tickets to claim a random server waifu with `/gacha roll [ticketsToSpend]`
+ADD_ME:
+  - You want *me* in **your** server?
+  - YAY! just click below and we can get started!
+  - https://discord.com/oauth2/authorize?client_id=807859649621524490&permissions=33792&scope=applications.commands%20bot
+CONTRIBUTE:
+  - headpatbot is lisenced under the GPL v3.0 License
+  - view the code, and/or contribute to development
+  - https://github.com/SayethWe/HeadpatBotV2
+SUPPORT:
+  - Join the development and support server
+  - https://discord.gg/yhQzBYqFZb
