@@ -1,6 +1,5 @@
 QUICKSTART:
-  - getting started:
-  - get a headpat with `/headpat`
+  - get a headpat (or up to four!) with `/headpat`
   - use `/waifu show [waifu]` to see an image of a waifu known to the bot
   - suggest a new waifu, or an image of an existing one, using `/waifu suggest [name] [source]` and attaching an image
   - the `/managewaifus` commands can be used to add waifus known to the bot to your server. We reccomend making this command moderator-only.
