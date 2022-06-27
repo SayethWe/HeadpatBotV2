@@ -12,3 +12,4 @@ discord.log
 Waifus.txt
 failedList*.txt
 bot/testing.py
+prune.py

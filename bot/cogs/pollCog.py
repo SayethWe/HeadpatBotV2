@@ -69,7 +69,7 @@ class PollCog(commands.Cog):
         try:
             (names, sources) = newPoll.startPoll(pollGuild.waifus)
         except InsufficientOptionsError:
-            await self.bot.respond('WAIFU.POLL.INSUFFICIENT',ephemeral=True)
+            await self.bot.respond(inter,'WAIFU.POLL.INSUFFICIENT',ephemeral=True)
             pollGuild.removePoll(newPoll)
             return
         # 2 create image
