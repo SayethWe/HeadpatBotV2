@@ -1,7 +1,7 @@
 import os, logging
 from pickle import UnpicklingError
 import disnake
-from disnake import Interaction, ApplicationCommandInteraction, File, Webhook
+from disnake import Interaction, ApplicationCommandInteraction, File, Webhook, Guild
 from disnake.abc import GuildChannel
 from disnake.ext import commands
 import yaml
@@ -32,7 +32,7 @@ class HeadpatBot(commands.InteractionBot):
         self.logger.info(f"Logging in as {self.user}")
         for guild in self.guilds:
             try:
-                self.servers[guild.id] = await database.getGuildPickle(guild.id)  # only place database is used
+                self.servers[guild.id] = await database.getGuildPickle(guild.id)  # place 1 database is used
             except (UnpicklingError, TypeError):
                 self.servers[guild.id]=Server.load(guild.id)
             self.logger.info(f"loading server {guild.name} with id {guild.id}")
@@ -61,6 +61,31 @@ class HeadpatBot(commands.InteractionBot):
             #last ditch effort to get some info to the log and user
             self.logger.critical(err)
             self.logger.critical(f'an error occured while handling previous error: {err2}')
+
+    async def on_guild_join(
+        self,
+        guild:Guild
+    ):
+        #add to list
+        s = Server(guild.id)
+        self.logger.info(f'new guild {guild.name}\n {str(s)}')
+        self.servers[guild.id]=s
+        #save pickle
+        s.save()
+        #add to database
+        await database.storeGuildPickle(s)                # place 2 database is used
+
+    async def on_guild_remove(
+        self,
+        guild:Guild
+    ):
+        #remove from list
+        s=self.servers.pop(guild.id)
+        self.logger.info(f'leaving guild {guild.id}|{guild.name}')
+        #delete file
+        s.delete()
+        #remove from database
+        await database.removeGuild(guild.id)              # place 3 database is used
 
     ### help command TODO
     @commands.slash_command(

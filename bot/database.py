@@ -57,6 +57,10 @@ async def storeGuildPickle(guild:Server):
     pickle_bytes = pickle.dumps(guild)
     await doCommand(cmdString,guild.identity,pickle_bytes)
 
+async def removeGuild(guildId:int):
+    cmdString = "DELETE FROM guilds WHERE id = $1"
+    await doCommand(cmdString,guildId)
+
 async def storeWaifu(name:str,source:str,image,imageHash:int):
     cmdString = "INSERT INTO waifus (name,source,data,hash) VALUES ($1,$2,$3,$4) ON CONFLICT DO NOTHING"
     data = qoi.encode(image)

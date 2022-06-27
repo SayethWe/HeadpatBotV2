@@ -44,8 +44,10 @@ Add Reactions
 ## Features/ Commands
 All commands are slash commands
 
-#### /help
-- sends the readme file (this file) for command information
+#### /help `query`
+- Dumps explanations in chat
+
+`query`: a choice of what to ask about. QUICKSTART will be a new user's first aide.
 
 ##### /headpat `qty`
 - receive random headpat images
@@ -168,7 +170,7 @@ However, any self-hosted bots should make themselves obvious as such.
 `DISCORD_TOKEN`: The logon token for the bot account
 `APPROVAL_CHANNEL`: Channel ID to get messages from the bot asking to approve suggested Waifus. Bot must have send message and attach file permissions in this channel.
 `ANNOUNCE_HOOK`: Webhook to send messages from the bot when a new waifu is approved.
-`DATABASE_URL`:Credentials link to a postgresql database for storing data. Theoretically optional when not using Heroku. Not using it has not been tested since implemented.
+`DATABASE_URL`:Credentials link to a postgresql database for storing data.
 `LOGS_HOOK`: A discord webhook to send Critical, Error, and Warning logs to. Optional.
 
 `TEST_ENV`: Guild ID(s) to test slash commands in. Optional. Do not use in deployed environment.

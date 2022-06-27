@@ -40,7 +40,7 @@ class WaifuCog(commands.Cog):
                     await self.bot.respond(announceHook,'WAIFU.ADD.ANNOUNCE.NEW',name,source,file = attachment)
             await self.bot.respond(button_inter,'WAIFU.ADD.APPROVE',name)
             #set the buttons to allow removal
-            removeButton=Button(label='reject',style=ButtonStyle.red,custom_id=f'approval|{imageHash}|remove')
+            removeButton=Button(label='remove',style=ButtonStyle.red,custom_id=f'approval|{imageHash}|remove')
             await button_inter.edit_original_message(components=removeButton)
         elif data[2] == 'reject':
             (*discard,name,source) = await database.removeApproval(imageHash) #we've interacted. remove the approval, and get the data

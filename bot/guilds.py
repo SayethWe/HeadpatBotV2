@@ -65,6 +65,10 @@ class Server:
         with open(filePath,'wb') as saveFile:
             pickle.dump(self,saveFile)
 
+    def delete(self):
+        filePath=os.path.join(SAVE_FOLDER,f'{self.identity}.p')
+        os.remove(filePath)
+
     @staticmethod
     def load(identity:int) -> Server:
         try:
@@ -101,7 +105,7 @@ class Server:
         ax.set_title("Waifu Ratings")
 
     def __repr__(self):
-        return f'name:{self.__class__.__name__},guildId={self.identity}\nwaifus={self.waifus}\npolls={self.polls}\noptions={self.options}'
+        return f'name:{self.__class__.__name__},guildId={self.identity}\n{len(self.waifus)} waifus={self.waifus}\n{len(self.polls)} polls={self.polls}\noptions={self.options}'
 
     def addPoll(self,poll:Poll):
         self.polls.append(poll)
