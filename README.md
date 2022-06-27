@@ -27,7 +27,7 @@ A discord bot for headpats and rating waifus
 5.x.x - Gacha game and Tickets
 
 
-[Add the bot to your server](https://discord.com/oauth2/authorize?client_id=807859649621524490&permissions=33792&scope=applications.commands%20bot)  
+[Add the bot to your server](https://discord.com/api/oauth2/authorize?client_id=989370465342590977&permissions=50176&scope=bot%20applications.commands)  
 [Join the support server](https://discord.gg/yhQzBYqFZb)  
 [View the Source](https://github.com/SayethWe/HeadpatBotV2)
 
