@@ -122,6 +122,36 @@ def saveRawPollImage(array,filename:str,subfolder:str) -> bool:
     qoi.write(path,array)
     return prevExist
 
+def removePollImage(filename:str,subfolder:str):
+    """
+    removes a waifu image from the filesystem, deleting the whole directory if there are no images left
+
+    Parameters
+    ---
+    filename: `str`
+        name of the file to remove
+    subfolder: `str`
+        folder to look in and delete if necessary
+    
+    Returns
+    ---
+    `bool`
+        `True` if the entire directory was removed  
+        `False` otherwise
+    """
+    lastOne=False
+    folder = os.path.join(POLL_FOLDER,subfolder)
+    rmFile = os.path.join(folder,f'{filename}.qoi')
+    if os.path.exists(rmFile):
+        os.remove(rmFile)
+    else:
+        raise WaifuDNEError
+    pattern = os.path.join(folder,'*.qoi')
+    matches = glob.glob(pattern)
+    if not matches and os.path.exists(folder): #no waifus left, but folder *does* exist
+        lastOne = True
+        os.removedirs(folder)
+    return lastOne
 
 def loadPollImage(subfolder:str) -> Image.Image:
     """

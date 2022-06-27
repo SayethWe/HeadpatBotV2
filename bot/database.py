@@ -70,6 +70,11 @@ async def loadWaifu(imageHash:int):
     image = await doCommandReturn(cmdString,imageHash)
     return qoi.decode(image.get('data'))
 
+async def removeWaifu(imageHash:int):
+    cmdString = "DELETE FROM waifus WHERE hash = $1 RETURNING name, source"
+    data = await doCommandReturn(cmdString, imageHash)
+    return (data.get('name'),data.get('source'))
+
 async def getWaifuHashes(name:str,source:str):
     cmdString = "SELECT hash FROM waifus WHERE name = $1 AND source = $2"
     waifuHashes=await doCommandReturnAll(cmdString,name,source)

@@ -53,10 +53,17 @@ WAIFU: #waifu
         - Everyone, meet {0}, joining us from {1}
       EXISTING:
         - Another Picture for {1}'s {0} has been added
+      REMOVE:
+        - I must report {0} has been removed entirely. Truly a great loss for {1}.
     APPROVE:
       - approved {0}
     DENY:
       - rejected {0}
+    REMOVE:
+      ONE:
+        - deleted an image for {0}
+      LAST:
+        - removed {0}
   SHOW: #show
     PASS:
       - ding! Your waifu is ready!

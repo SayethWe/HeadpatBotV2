@@ -23,12 +23,12 @@ class WaifuCog(commands.Cog):
         if data[0] != 'approval':
             return
         await button_inter.response.defer()
-        #remove all the buttons
-        await button_inter.edit_original_message(components=None)
-        (imageArray,name,source) = await database.removeApproval(int(data[1])) #we've interacted. remove the approval, and get the data
-        self.logger.debug(f'approving or denying {name}|{source}')
+        imageHash = int(data[1])
         if data[2] == 'accept':
-            existingWaifu = images.saveRawPollImage(imageArray,int(data[1]),images.sourceNameFolder(name,source)) #throw into the filesystem
+            (imageArray,name,source) = await database.removeApproval(imageHash) #we've interacted. remove the approval, and get the data
+            self.logger.debug(f'approving {name}|{source}')
+            existingWaifu = images.saveRawPollImage(imageArray,imageHash,images.sourceNameFolder(name,source)) #throw into the filesystem
+            await database.storeWaifu(name,source,imageArray,imageHash) #and into the database
             async with ClientSession() as session:
                 announceHook = Webhook.from_url(os.environ['ANNOUNCE_HOOK'],session=session,bot_token=os.environ['DISCORD_TOKEN'])
                 imageBytes = images.arrayToBytes(imageArray) #get image as bytes
@@ -39,8 +39,37 @@ class WaifuCog(commands.Cog):
                 else:
                     await self.bot.respond(announceHook,'WAIFU.ADD.ANNOUNCE.NEW',name,source,file = attachment)
             await self.bot.respond(button_inter,'WAIFU.ADD.APPROVE',name)
+            #set the buttons to allow removal
+            removeButton=Button(label='reject',style=ButtonStyle.red,custom_id=f'approval|{imageHash}|remove')
+            await button_inter.edit_original_message(components=removeButton)
         elif data[2] == 'reject':
+            (*discard,name,source) = await database.removeApproval(imageHash) #we've interacted. remove the approval, and get the data
+            self.logger.debug(f'rejecting {name}|{source}')
             await self.bot.respond(button_inter,'WAIFU.ADD.DENY',name)
+            #remove the buttons
+            await button_inter.edit_original_message(components=None)
+        elif data[2] == 'remove':
+            #remove waifu from:
+            #database
+            (name,source) = await database.removeWaifu(imageHash)
+            self.logger.debug(f'removing {name}|{source}')
+            # file system
+            waifuGone = images.removePollImage(imageHash,images.sourceNameFolder(name,source))
+            if waifuGone:
+                # all servers
+                for guildId in self.bot.servers:
+                    try:
+                        self.bot.servers[guildId].removeWaifu(name,source)
+                    except WaifuDNEError:
+                        pass
+                await self.bot.respond(button_inter,'WAIFU.ADD.REMOVE.LAST',name)
+                async with ClientSession() as session:
+                    announceHook = Webhook.from_url(os.environ['ANNOUNCE_HOOK'],session=session,bot_token=os.environ['DISCORD_TOKEN'])
+                    await self.bot.respond(announceHook,'WAIFU.ADD.ANNOUNCE.REMOVE',name,source)
+            else:
+                await self.bot.respond(button_inter,'WAIFU.ADD.REMOVE.ONE',name)
+            #remove the buttons
+            await button_inter.edit_original_message(components=None)
 
     # Headpat
     @commands.slash_command(
@@ -123,7 +152,7 @@ class WaifuCog(commands.Cog):
                 #unclaimed
                 footer_text=self.bot.getResponse('WAIFU.SHOW.FOOTER.UNCLAIMED',serverSide.rating)
             else:
-                claimer = await self.bot.getch_user(serverSide.claimer)
+                claimer = await inter.guild.getch_member(serverSide.claimer)
                 footer_text=self.bot.getResponse('WAIFU.SHOW.FOOTER.CLAIMED',serverSide.rating,claimer.display_name)
             embed.set_footer(text=footer_text)
         except WaifuDNEError:
