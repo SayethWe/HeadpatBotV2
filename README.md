@@ -43,36 +43,13 @@ Add Reactions
 
 ## Features/ Commands
 All commands are slash commands
-
-#### /help `query`
-- Dumps explanations in chat
-
-`query`: a choice of what to ask about. QUICKSTART will be a new user's first aide.
+`/help QUICKSTART` will be a new user's first best aide.  
 
 ##### /headpat `qty`
-- receive random headpat images
-- headpat images are added directly to the bot files. To request one be added, contact the author
-
-`qty`: specifies how many pats to receive. Between 1 and 4 inclusive
-
-##### /options `option value`
-Change your server options for polls
-
-`option`: selects which option to edit
-- PollWaifuCount: How Many Waifus to include in each poll.
-- PollParticipationCheckStartHours: Minimum length of time for a poll to run before starting auto-close checks. Unused
-- PollParticipationCheckDeltaHours: How often to perform an auto-close check after starting. Unused
-- PollEndHours: How long to wait since a poll has started before forcibly closing it. Unused
-- PollParticipationCheckCount: Number of people who must have confirmed their vote when an auto-close check runs to close the poll. Unused
-- PollWaifuImageSizePixels: How large to make each waifu image in a poll. Unimplemented
-- PollStartNextGapHours: How long to wait after a poll has ended to start the next one. Unused
-
-`value`: value to set the selected option to
-
 ### /waifu
-Command Family for waifu polls
+Command Family for waifus
 
-`waifu` supports autocomplete. It represents a waifu as stored in minimal folder structure. that is: `source material`/`waifu name`
+`waifu` fields support autocomplete. Represents a waifu as stored in minimal folder structure. that is: `source material`/`waifu name`
 
 ##### /waifu suggest `image name source`
 Suggest a waifu for inclusion in the main waifu database, or a new image for an existing one.
@@ -105,11 +82,8 @@ Roll a random unclaimed waifu from the server polls to collect
 ##### /gacha collection
 See which waifus you've rolled
 
-### /tickets
-Economy-based tickets
-
 ##### /tickets get
-See how many tickets you have
+See how many tickets you have to spend on rolls
 
 ### /poll
 Family of poll-related commands
@@ -128,7 +102,7 @@ Show the results graphs from any poll run after 4.2.0
 ### /manageWaifus
 command family for managing server waifus. seperate command group to support command permissioning
 
-`waifu` supports autocomplete. It represents a waifu as stored in minimal folder structure. that is: `source material`/`waifu name`
+`waifu` fields support autocomplete. Represents a waifu as stored in minimal folder structure. that is: `source material`/`waifu name`
 
 ##### /manageWaifus pull `waifu`
 Add a waifu from the master database to your server's waifupolls. Newly added waifus are always initialized with a rating of 1
@@ -156,7 +130,7 @@ Licensed under the GPLv3.0 license. See LICENSE file.
 
 ## Credits
 LordOfEnnui#8710: V0 reddit bot, V1 Implementation and methodology consultation.  
-Sayeth_We#0663: V1 Implementation, Equation Design, V2 Rewrite
+Sayeth_We#0663: V1 Implementation, Equation Design, V2 Rewrite, Ongoing Development.
 
 ## Self hosting
 
@@ -167,13 +141,13 @@ you can also run on a local machine.
 However, any self-hosted bots should make themselves obvious as such.
 
 #### Environment Variables to use:
-`DISCORD_TOKEN`: The logon token for the bot account
-`APPROVAL_CHANNEL`: Channel ID to get messages from the bot asking to approve suggested Waifus. Bot must have send message and attach file permissions in this channel.
-`ANNOUNCE_HOOK`: Webhook to send messages from the bot when a new waifu is approved.
-`DATABASE_URL`:Credentials link to a postgresql database for storing data.
-`LOGS_HOOK`: A discord webhook to send Critical, Error, and Warning logs to. Optional.
+`DISCORD_TOKEN`: The logon token for the bot account  
+`APPROVAL_CHANNEL`: Channel ID to get messages from the bot asking to approve suggested Waifus. Bot must have send message and attach file permissions in this channel.  
+`ANNOUNCE_HOOK`: Webhook to send messages from the bot when a new waifu is approved.  
+`DATABASE_URL`:Credentials link to a postgresql database for storing data.  
+`LOGS_HOOK`: A discord webhook to send Critical, Error, and Warning logs to. Optional.  
 
 `TEST_ENV`: Guild ID(s) to test slash commands in. Optional. Do not use in deployed environment.
 
 #### Launch File:
-Assuming The Environment Variables are set up, running `headpatbot.py` will start the bot and connect to discord automatically.
+Assuming The Environment Variables are set up, running `runBot.py` will start the bot and connect to discord automatically. Working directory should be the master directory. Alternately, run `heroku local` from the command line in the main directory

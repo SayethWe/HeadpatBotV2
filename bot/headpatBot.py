@@ -88,14 +88,14 @@ class HeadpatBot(commands.InteractionBot):
         await database.removeGuild(guild.id)              # place 3 database is used
 
     ### help command TODO
-    @commands.slash_command(
-        description="Get command and bot documentation"
-    )
-    async def help(
-        self,
-        inter: ApplicationCommandInteraction
-    ): #dump the README to the user
-        await self.respond(inter,'HELP',file=File("README.md"),ephemeral=True)
+    #@commands.slash_command(
+    #    description="Get command and bot documentation"
+    #)
+    #async def help(
+    #    self,
+    #    inter: ApplicationCommandInteraction
+    #): #dump the README to the user
+    #    await self.respond(inter,'HELP',file=File("README.md"),ephemeral=True)
 
     async def respond(self,sendable:Interaction|Webhook|GuildChannel,request:str,*args:str,**kwargs):
         reply=self.getResponse(request,*args)

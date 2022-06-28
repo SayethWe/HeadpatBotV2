@@ -55,7 +55,7 @@ class Poll:
 
     def __init__(self,messageId:int,size:int):
         self.messageId=messageId
-        self.open = True
+        self.open = False
         self.users=list[int]()
         self.waifus=list[Waifu]()
         self.ratings=list[int]()
@@ -85,6 +85,7 @@ class Poll:
             sources.append(choice.source)
             self.ratings.append(choice.rating)
             self.waifus.append(choice)
+        self.open=True #only now do we mark open
         return (names,sources)
         
     def endPoll(self): #TODO: maybe take in an inter from commandclose, but if none, do autoclose stuff?
@@ -221,12 +222,12 @@ class Poll:
         nl = int(np.ceil(0.3*pollSize)) #...bottom of range...
         na = pollSize-(nh+nm+nl)#...and entire range
 
-        if max(nh,nl) >= 0.25*(len(indices)-na): #we're gonna have a problem
+        if max(nh,nl) >= 0.25*(len(indices)-na): #we're gonna try to pick too many from a quartile
             raise InsufficientOptionsError
 
         selected=np.zeros(pollSize,dtype=np.int64)
         selected[:na]=Poll.rng.choice(indices,size=na,replace=False)
-        indices=np.setdiff1d(indices,selected[:na],assume_unique=True)
+        indices=np.setdiff1d(indices,selected[:na],assume_unique=True) #remove those uniformly selected from future calculations
         size=len(indices)
         lq=int(0.25*size)
         uq=int(0.75*size)
@@ -243,7 +244,7 @@ class Poll:
         expectation = Poll.cubicSigmoid(self.ratings)
         actual=Poll.cubicSigmoid(self.votes)
         diff=actual-expectation
-        np.append(diff,[-2,2]) #make sure we have the extreme possible values so we don't get different adjustments
+        diff=np.append(diff,[-2,2]) #make sure we have the extreme possible values so we don't get different adjustments
         changes=Poll.cubicSigmoid(diff,magnitude=Poll.MAX_RATING_CHANGE)
         changes=changes[:-2] #remove the extremes we added before
         #return np.around(diff*diff*diff)
