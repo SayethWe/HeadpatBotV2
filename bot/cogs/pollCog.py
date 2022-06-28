@@ -79,7 +79,7 @@ class PollCog(commands.Cog):
         # 3 create vote buttons
         buttons=newPoll.createPollButtons(pollInd,names,sources)
         # 4 post image and buttons
-        await self.bot.respond(inter,'WAIFU.POLL.OPEN',file=attachment,components=buttons)
+        await self.bot.respond(inter,'WAIFU.POLL.OPEN',pollInd,file=attachment,components=buttons)
         # 6 poll end
         #if (autoClose):
         #    delay = pollGuild.options[guilds.Server.ServerOption.PollParticipationCheckStartHours.value]
