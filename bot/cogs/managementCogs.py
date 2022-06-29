@@ -4,7 +4,7 @@ import logging, os
 from headpatExceptions import WaifuConflictError, WaifuDNEError
 from guilds import Server
 from headpatBot import HeadpatBot
-from injections import WaifuData
+from injections import WaifuData, folderWaifu
 #library imports
 from disnake import ApplicationCommandInteraction, Permissions, Attachment, File
 from disnake.ext import commands
@@ -30,7 +30,7 @@ class ManageWaifusCog(commands.Cog):
     async def pull(
         self,
         inter:ApplicationCommandInteraction,
-        waifuData:WaifuData
+        waifuData:WaifuData = commands.inject(folderWaifu)
     ):
         name=waifuData.name
         source=waifuData.source

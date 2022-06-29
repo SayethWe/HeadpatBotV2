@@ -2,9 +2,9 @@
 import os, logging
 import glob, io
 from aiohttp import ClientSession
-from headpatExceptions import *
 #local imports
-from injections import WaifuData, NameSourceWaifu
+from headpatExceptions import *
+from injections import WaifuData, folderWaifu, nameSourceWaifu, gachaWaifu
 import images, database
 from headpatBot import HeadpatBot
 #library imports
@@ -100,7 +100,7 @@ class WaifuCog(commands.Cog):
         self,
         inter:ApplicationCommandInteraction,
         image:Attachment, 
-        waifuData:NameSourceWaifu
+        waifuData:WaifuData = commands.inject(nameSourceWaifu)
     ): #Sends a waifu to the approval channel
         if image.content_type.startswith('image'): #ensure it's actually an image
             name=waifuData.name
@@ -129,7 +129,7 @@ class WaifuCog(commands.Cog):
     async def show(
         self,
         inter:ApplicationCommandInteraction,
-        waifuData:WaifuData
+        waifuData:WaifuData = commands.inject(folderWaifu)
     ):
         await inter.response.defer()
         name=waifuData.name
