@@ -123,3 +123,7 @@ GACHA:
       - You don't have enough tickets to roll that high.
     SUCCESS:
       - You've just obtained {0}!
+    FULL:
+      - You've already got too many waifus.
+    NONE:
+      - There are no claimable waifus left in this server.

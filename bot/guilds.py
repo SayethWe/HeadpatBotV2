@@ -4,7 +4,7 @@ import os, logging
 import images
 import pickle
 from polls import Poll, Waifu
-from headpatExceptions import WaifuDNEError,WaifuConflictError,InsufficientOptionsError
+from headpatExceptions import *
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -22,6 +22,7 @@ class Server:
         PollParticipationCheckCount='pollParticipation' #how many people should vote to end poll
         PollWaifuImageSizePixels='waifuImageSize' #how many pixels to make the tiles in the poll collage, unused
         PollStartNextGapHours='pollNextDelay' #how long to wait after endeing a poll to start the next, unused
+        GachaMaxWaifus='gachaMaximumCollection'
 
     @staticmethod
     def defaultOptions():
@@ -33,6 +34,7 @@ class Server:
         options[Server.ServerOption.PollParticipationCheckCount.value]=6
         options[Server.ServerOption.PollWaifuImageSizePixels.value]=500
         options[Server.ServerOption.PollStartNextGapHours.value] = 24
+        options[Server.ServerOption.GachaMaxWaifus] = 8
         return options
     
     def __init__(self,identity):
@@ -125,6 +127,8 @@ class Server:
     def modifyTickets(self,user:int,delta:int):
         self.ensureTickets(user)
         oldTickets=self.tickets[user]
+        if oldTickets + delta < 0:
+            raise InsufficientTicketsError
         self.tickets[user] = oldTickets+delta
 
     def getTickets(self,user:int) -> int:
@@ -132,6 +136,8 @@ class Server:
         return self.tickets[user]
 
     def waifuRoll(self,userId:int,tickets:int) -> Waifu:
+        if len([waifu for waifu in self.waifus if waifu.claimer == userId]) >= self.options[Server.ServerOption.GachaMaxWaifus]:
+            raise CollectionFullError
         rng=np.random.default_rng()
         #get available waifus and their ratings
         available = [waifu for waifu in self.waifus if waifu.claimer == 0 and waifu.rating >= 0]

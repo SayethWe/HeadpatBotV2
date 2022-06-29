@@ -2,13 +2,13 @@
 import os, logging
 import glob, io
 from aiohttp import ClientSession
-from headpatExceptions import WaifuDNEError
+from headpatExceptions import *
 #local imports
 from injections import WaifuData, NameSourceWaifu
 import images, database
 from headpatBot import HeadpatBot
 #library imports
-from disnake import ActionRow, ApplicationCommandInteraction, Embed, File, Attachment, MessageInteraction, Webhook, ButtonStyle
+from disnake import ApplicationCommandInteraction, Embed, File, Attachment, MessageInteraction, Webhook, ButtonStyle
 from disnake.ui import Button
 from disnake.ext import commands
 
@@ -228,17 +228,19 @@ class GachaCog(commands.Cog):
         await inter.response.defer()
         userId=inter.author.id
         server=self.bot.servers[inter.guild.id]
-        #ensure user has enough tickets
-        if server.getTickets(userId) < spend:
-            await self.bot.respond(inter,'GACHA.ROLL.INSUFFICIENT')
-            return
-        #ensure user isn't over limit for waifus TODO
-        #remove tickets
-        server.modifyTickets(userId,-spend)
-        #roll a waifu
-        selected=server.waifuRoll(userId,spend)
-        #do the alert
-        await self.bot.respond(inter,'GACHA.ROLL.SUCCESS',selected.name,selected.source)
+        try:
+            #remove tickets
+            server.modifyTickets(userId,-spend)
+            #roll a waifu
+            selected=server.waifuRoll(userId,spend)
+            #do the alert
+            await self.bot.respond(inter,'GACHA.ROLL.SUCCESS',selected.name,selected.source)
+        except InsufficientTicketsError:
+            await self.bot.respond(inter,'GACHA.ROLL.INSUFFICIENT',ephemeral=True)
+        except InsufficientOptionsError:
+            await self.bot.respond(inter,'GACHA.ROLL.',ephemeral=True)
+        except CollectionFullError:
+            await self.bot.respond(inter,'GACHA.ROLL.FULL',ephemeral=True)
 
     @gacha.sub_command(
         description="see your claimed waifus"
