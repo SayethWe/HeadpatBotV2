@@ -48,7 +48,7 @@ class ManageWaifusCog(commands.Cog):
     async def remove(
         self,
         inter:ApplicationCommandInteraction,
-        waifuData:WaifuData
+        waifuData:WaifuData = commands.inject(folderWaifu)
     ):
         name=waifuData.name
         source=waifuData.source
