@@ -239,9 +239,9 @@ class Poll:
         return selected
 
     def ratingChanges(self):
-        if self.open:
+        #if self.open:  #ignore for now, as it causes ratings to stagnate with the "only close when logic is done" methodology
             #votes are volatile. return 0
-            return np.zeros(shape=self.size)
+        #    return np.zeros(shape=self.size)
         expectation = Poll.cubicSigmoid(self.ratings)
         actual=Poll.cubicSigmoid(self.votes)
         diff=actual-expectation

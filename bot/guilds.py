@@ -42,7 +42,7 @@ class Server:
         self.waifus=list[Waifu]()
         self.polls=list[Poll]()
         self.options=Server.defaultOptions()
-        self.tickets=dict[int,int]
+        self.tickets=dict[int,int]()
 
     def addWaifu(self,name:str,source:str):
         if os.path.exists(os.path.join(images.POLL_FOLDER,images.sourceNameFolder(name,source))):
@@ -121,7 +121,11 @@ class Server:
             self.tickets
         except AttributeError:
             self.tickets = dict[int,int]() #backwards compatibility code
-        if user not in self.tickets:
+        try:
+            if user not in self.tickets:
+                self.tickets[user]=0
+        except TypeError: #account for existing dumb mistake
+            self.tickets=dict[int,int]()
             self.tickets[user]=0
 
     def modifyTickets(self,user:int,delta:int):
