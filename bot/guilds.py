@@ -34,7 +34,7 @@ class Server:
         options[Server.ServerOption.PollParticipationCheckCount.value]=6
         options[Server.ServerOption.PollWaifuImageSizePixels.value]=500
         options[Server.ServerOption.PollStartNextGapHours.value] = 24
-        options[Server.ServerOption.GachaMaxWaifus] = 8
+        options[Server.ServerOption.GachaMaxWaifus.value] = 8
         return options
     
     def __init__(self,identity):
@@ -140,7 +140,7 @@ class Server:
         return self.tickets[user]
 
     def waifuRoll(self,userId:int,tickets:int) -> Waifu:
-        if len([waifu for waifu in self.waifus if waifu.claimer == userId]) >= self.options[Server.ServerOption.GachaMaxWaifus]:
+        if len([waifu for waifu in self.waifus if waifu.claimer == userId]) >= self.options[Server.ServerOption.GachaMaxWaifus.value]:
             raise CollectionFullError
         rng=np.random.default_rng()
         #get available waifus and their ratings
