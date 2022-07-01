@@ -33,7 +33,7 @@ class HeadpatBot(commands.InteractionBot):
         for guild in self.guilds:
             try:
                 self.servers[guild.id] = await database.getGuildPickle(guild.id)  # place 1 database is used
-            except (UnpicklingError, TypeError):
+            except (UnpicklingError, TypeError, AttributeError):
                 self.servers[guild.id]=Server.load(guild.id)
             self.logger.info(f"loading server {guild.name} with id {guild.id}")
         self.logger.info('bot is ready')

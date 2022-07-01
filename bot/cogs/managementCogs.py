@@ -76,7 +76,7 @@ class ManageWaifusCog(commands.Cog):
                 numFailed=0
                 for waifu in waifus:
                     self.logger.debug(waifu)
-                    waifu=waifu.replace('\r','').replace('\n','')
+                    waifu=waifu.replace('\r','').replace('\n','').strip()
                     info=waifu.split(',')
                     try:
                         self.bot.servers[inter.guild.id].addWaifu(info[0],info[1])
@@ -86,6 +86,9 @@ class ManageWaifusCog(commands.Cog):
                     except WaifuConflictError:
                         numFailed+=1
                         failedList.write(f'already present in server:  {waifu}\n')
+                    except IndexError:
+                        #must have reached a dead line
+                        pass
 
             if(numFailed>0):
                 with open(f"failedList{inter.guild.id}.txt",'rb') as failedList:
