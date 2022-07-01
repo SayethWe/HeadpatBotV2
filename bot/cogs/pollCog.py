@@ -62,7 +62,9 @@ class PollCog(commands.Cog):
                 #TODO: include link to message
                 await self.bot.respond(inter,'WAIFU.POLL.EXISTS',ephemeral=True)
                 return
-        newPoll=Poll(inter.guild.id,pollGuild.options[Server.ServerOption.PollWaifuCount.value])
+        quickLink = await inter.original_message()
+        quickLink = quickLink.jump_url
+        newPoll=Poll(inter.guild.id,pollGuild.options[Server.ServerOption.PollWaifuCount.value],quickLink)
         pollInd=pollGuild.addPoll(newPoll)
         # to run a poll:
         # 1 select options
@@ -141,3 +143,22 @@ class PollCog(commands.Cog):
         plt.close(fig)
         figBytes.seek(0)
         await self.bot.respond(inter,'WAIFU.POLL.RESULTS',file=File(figBytes,filename="results.png"))
+
+    @poll.sub_command(
+        description="Get a link to the latest poll"
+    )
+    async def jump(
+        self,
+        inter:ApplicationCommandInteraction
+    ):
+        pollGuild = self.bot.servers[inter.guild.id]
+        if len(pollGuild.polls)!=0: #other polls have run
+            poll = pollGuild.polls[-1]
+        else:
+            await self.bot.respond(inter,'WAIFU.POLL.JUMP.NONE',ephemeral=True)
+            return
+        try:
+            await self.bot.respond(inter,'WAIFU.POLL.JUMP.SUCCESS',poll.quickLink,ephemeral=True)
+        except AttributeError:
+            await self.bot.respond(inter,'WAIFU.POLL.JUMP.OLD',ephemeral=True)
+        

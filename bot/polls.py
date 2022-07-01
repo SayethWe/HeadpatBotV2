@@ -53,9 +53,10 @@ class Poll:
         CONFIRM=2
         CLOSED=3
 
-    def __init__(self,messageId:int,size:int):
+    def __init__(self,messageId:int,size:int,quickLink:str):
         self.messageId=messageId
         self.open = False
+        self.quickLink = quickLink
         self.users=list[int]()
         self.waifus=list[Waifu]()
         self.ratings=list[int]()

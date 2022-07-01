@@ -107,6 +107,13 @@ WAIFU: #waifu
       - Not enough waifus avaialable! Add more and try again.
     RESULTS:
       - Here are the results
+    JUMP:
+      NONE:
+        - There's no poll to jump you to!
+      OLD:
+        - The most recent poll predates the jump command
+      SUCCESS:
+        - 'The last poll in this server is here: {0}'
   LIST:
     GLOBAL:
       - There are {0} waifus in the global database
