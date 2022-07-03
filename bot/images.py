@@ -40,7 +40,7 @@ def arrayToBytes(array):
     return imageToBytes(image)
 
 def sourceNameFolder(name:str,source:str) -> str:
-    return os.path.join(source,name)
+    return os.path.join(source.title(),name.title())
 
 def saveHeadpatImage(data:io.BytesIO) -> None:
     """
