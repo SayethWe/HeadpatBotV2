@@ -1,4 +1,4 @@
-import os, io, glob
+import os, io, glob, logging
 from PIL import Image, ImageOps, ImageDraw, ImageFont
 import numpy as np
 from numpy.random import default_rng
@@ -9,6 +9,7 @@ POLL_FOLDER=os.path.join('img','waifu')
 HEADPAT_FOLDER=os.path.join('img','headpat')
 rng = default_rng()
 font = ImageFont.truetype(os.path.join('data','Cotham',"CothamSans.otf"), size=20)
+logger=logging.getLogger(os.environ['LOGGER_NAME'])
 
 def imageToBytes(image:Image.Image) -> io.BytesIO:
     """
@@ -64,6 +65,7 @@ def loadHeadpatImage() -> Image.Image:
     :class:`PIL.Image.Image`:
         an image of the headpat
     """
+    logger.debug('loading headpat')
     pattern = os.path.join(HEADPAT_FOLDER,'*.qoi')
     matches = glob.glob(pattern)
     filePath = rng.choice(matches)
@@ -113,6 +115,7 @@ def saveRawPollImage(array,filename:str,subfolder:str) -> bool:
         `True` if the subfolder alread existed  
         `False` if the subfolder did not previously exist
     """
+    logger.debug('saving ' + filename + ' for ' + subfolder)
     prevExist = True
     folder=os.path.join(POLL_FOLDER,subfolder)
     if not os.path.exists(folder):
@@ -139,6 +142,7 @@ def removePollImage(filename:str,subfolder:str):
         `True` if the entire directory was removed  
         `False` otherwise
     """
+    logger.debug('removing ' + filename + ' for ' + subfolder)
     lastOne=False
     folder = os.path.join(POLL_FOLDER,subfolder)
     rmFile = os.path.join(folder,f'{filename}.qoi')
@@ -166,12 +170,14 @@ def loadPollImage(subfolder:str) -> Image.Image:
     ---
     :class:`PIL.Image.Image`
     """
+
+    logger.debug('loading '+ subfolder + ' poll image')
     folder = os.path.join(POLL_FOLDER,subfolder)
     pattern = os.path.join(folder,'*.qoi')
     matches = glob.glob(pattern)
     if not matches:
         raise WaifuDNEError
-    #print(f'{pattern}\n matched by\n{matches}')
+    logger.debug(f'{pattern}\n matched by\n{matches}')
     filePath = rng.choice(matches)
     imageArray=qoi.read(filePath)
     image = Image.fromarray(imageArray)
