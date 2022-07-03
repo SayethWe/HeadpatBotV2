@@ -130,3 +130,8 @@ class TestCog(commands.Cog):
     async def addTickets(self,inter,amt:int):
         self.bot.servers[inter.guild.id].modifyTickets(inter.author.id,amt)
         await inter.send('done',ephemeral=True)
+
+    @commands.slash_command()
+    async def error(self,inter):
+        await inter.send('error raised')
+        raise AttributeError

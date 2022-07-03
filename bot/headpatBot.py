@@ -1,5 +1,6 @@
 import os, logging
 from pickle import UnpicklingError
+from aiohttp import ClientSession
 import disnake
 from disnake import Interaction, ApplicationCommandInteraction, File, Webhook, Guild
 from disnake.abc import GuildChannel
@@ -22,7 +23,8 @@ class HeadpatBot(commands.InteractionBot):
         self.servers=dict[int,Server]()
         #enumerate our intents
         intents = disnake.Intents(
-            guilds=True #in order to access the announcement channel, and load servers
+            guilds=True, #in order to access the announcement channel, and load servers
+            members=True, #to display usernames and nicknames, esp. in waifu show               Priveleged Intent
         )
         help_command=commands.DefaultHelpCommand()
         super().__init__(intents=intents,help_command=help_command,*args,**kwargs)
@@ -59,6 +61,12 @@ class HeadpatBot(commands.InteractionBot):
                 await self.respond(inter,'ERROR.ARGUMENT',ephemeral=True)
             else:
                 await self.respond(inter,'ERROR.GENERIC',ephemeral=True)
+                if 'LOGS_HOOK' in os.environ:
+                    self.logger.warning('Error unhandled, dumping log to webhook')
+                    async with ClientSession() as session:
+                        logHook = Webhook.from_url(os.environ['LOGS_HOOK'],session=session,bot_token=os.environ['DISCORD_TOKEN'])
+                        attachment = File('discord.log')
+                        await self.send(logHook,'log dump',file=attachment)
         except Exception as err2:
             #last ditch effort to get some info to the log and user
             self.logger.critical(err)
