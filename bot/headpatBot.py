@@ -64,9 +64,12 @@ class HeadpatBot(commands.InteractionBot):
                 if 'LOGS_HOOK' in os.environ:
                     self.logger.warning('Error unhandled, dumping log to webhook')
                     async with ClientSession() as session:
-                        logHook = Webhook.from_url(os.environ['LOGS_HOOK'],session=session,bot_token=os.environ['DISCORD_TOKEN'])
-                        attachment = File('discord.log')
-                        await self.send(logHook,'log dump',file=attachment)
+                        with open('discord.log','rb') as file:
+                            logHook = Webhook.from_url(os.environ['LOGS_HOOK'],session=session,bot_token=os.environ['DISCORD_TOKEN'])
+                            file.seek(0,os.SEEK_END) #go to the end so we can get file size
+                            file.seek(max(-4*2**20,-file.tell()),os.SEEK_END) #get the last bit (4MiB) of the file, or if it's smaller, all of it.
+                            attachment = File(file)
+                            await self.send(logHook,'log dump',file=attachment)
         except Exception as err2:
             #last ditch effort to get some info to the log and user
             self.logger.critical(err)
