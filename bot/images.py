@@ -115,7 +115,7 @@ def saveRawPollImage(array,filename:str,subfolder:str) -> bool:
         `True` if the subfolder alread existed  
         `False` if the subfolder did not previously exist
     """
-    logger.debug('saving ' + filename + ' for ' + subfolder)
+    logger.debug(f'saving {filename} for {subfolder}')
     prevExist = True
     folder=os.path.join(POLL_FOLDER,subfolder)
     if not os.path.exists(folder):
@@ -142,7 +142,7 @@ def removePollImage(filename:str,subfolder:str):
         `True` if the entire directory was removed  
         `False` otherwise
     """
-    logger.debug('removing ' + filename + ' for ' + subfolder)
+    logger.debug(f'removing {filename} for {subfolder}')
     lastOne=False
     folder = os.path.join(POLL_FOLDER,subfolder)
     rmFile = os.path.join(folder,f'{filename}.qoi')
@@ -171,7 +171,7 @@ def loadPollImage(subfolder:str) -> Image.Image:
     :class:`PIL.Image.Image`
     """
 
-    logger.debug('loading '+ subfolder + ' poll image')
+    logger.debug(f'loading {subfolder} poll image')
     folder = os.path.join(POLL_FOLDER,subfolder)
     pattern = os.path.join(folder,'*.qoi')
     matches = glob.glob(pattern)

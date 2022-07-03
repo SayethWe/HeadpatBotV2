@@ -4,7 +4,7 @@ import logging, os
 from headpatExceptions import WaifuConflictError, WaifuDNEError
 from guilds import Server
 from headpatBot import HeadpatBot
-from injections import WaifuData, folderWaifu
+from injections import WaifuData, serverWaifu, missingWaifu
 #library imports
 from disnake import ApplicationCommandInteraction, Permissions, Attachment, File
 from disnake.ext import commands
@@ -30,7 +30,7 @@ class ManageWaifusCog(commands.Cog):
     async def pull(
         self,
         inter:ApplicationCommandInteraction,
-        waifuData:WaifuData = commands.inject(folderWaifu)
+        waifuData:WaifuData = commands.inject(missingWaifu)
     ):
         name=waifuData.name
         source=waifuData.source
@@ -48,7 +48,7 @@ class ManageWaifusCog(commands.Cog):
     async def remove(
         self,
         inter:ApplicationCommandInteraction,
-        waifuData:WaifuData = commands.inject(folderWaifu)
+        waifuData:WaifuData = commands.inject(serverWaifu)
     ):
         name=waifuData.name
         source=waifuData.source

@@ -1,6 +1,6 @@
-from attr import s
 from disnake import ApplicationCommandInteraction
 import glob
+from headpatExceptions import WaifuDNEError
 import images
 from disnake.ext import commands
 from dataclasses import dataclass
@@ -37,6 +37,29 @@ async def gacha_autocomplete(
     valid = sorted(set([waifuFolder for waifuFolder in rawList if input.title() in waifuFolder]))
     return valid[:25]
 
+async def pull_autocomplete(
+    inter:ApplicationCommandInteraction,
+    input:str
+):
+    raw_list = glob.glob('*/*',root_dir=images.POLL_FOLDER)
+    valid=[]
+    for waifu in raw_list:
+        if input.title() in waifu:
+            try:
+                inter.bot.servers[inter.guild.id].getWaifuByNameSource(waifu.split('/')[1],waifu.split('/')[0])
+            except WaifuDNEError: 
+                valid.append(waifu)
+    valid = sorted(valid)
+    return valid[:25]
+
+async def server_autocomplete(
+     inter:ApplicationCommandInteraction,
+    input:str
+):
+    rawList = [f'{waifu.source}/{waifu.name}' for waifu in inter.bot.servers[inter.guild.id].waifus]
+    valid = sorted(set([waifuFolder for waifuFolder in rawList if input.title() in waifuFolder]))
+    return valid[:25]
+
 @dataclass
 class WaifuData:
     _name:str
@@ -69,5 +92,17 @@ async def nameSourceWaifu(
 @commands.register_injection
 async def gachaWaifu(
     waifu:str=commands.Param(autocomplete=gacha_autocomplete,description="Claimed Waifu in source/name form")
+) -> WaifuData:
+    return await folderWaifu(waifu)
+
+@commands.register_injection
+async def missingWaifu(
+    waifu:str=commands.Param(autocomplete=pull_autocomplete,description="Waifu not in server in source/name form")
+) -> WaifuData:
+    return await folderWaifu(waifu)
+
+@commands.register_injection
+async def serverWaifu(
+    waifu:str=commands.Param(autocomplete=server_autocomplete,description="Waifu in server in source/name form")
 ) -> WaifuData:
     return await folderWaifu(waifu)
