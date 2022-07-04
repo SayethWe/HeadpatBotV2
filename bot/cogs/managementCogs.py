@@ -15,16 +15,16 @@ class ManageWaifusCog(commands.Cog):
         self.logger=logging.getLogger(os.environ['LOGGER_NAME'])
 
     @commands.slash_command(
-        default_permission=Permissions(manage_messages=True),
+        default_member_permission=Permissions(manage_messages=True),
         dm_permission=False
     )
-    async def manageWaifus(
+    async def manage_waifus(
         self,
         inter:ApplicationCommandInteraction
     ):
         pass
 
-    @manageWaifus.sub_command(
+    @manage_waifus.sub_command(
         description = "add a waifu to future polls on this server"
     )
     async def pull(
@@ -42,7 +42,7 @@ class ManageWaifusCog(commands.Cog):
         except WaifuDNEError:
             await self.bot.respond(inter,'WAIFU.ERROR.DNE',name,source)
 
-    @manageWaifus.sub_command(
+    @manage_waifus.sub_command(
         description="remove a waifu from further polls on this server"
     )
     async def remove(
@@ -58,10 +58,10 @@ class ManageWaifusCog(commands.Cog):
         except WaifuDNEError:
             await self.bot.respond(inter,'WAIFU.ERROR.DNE',name,source)
 
-    @manageWaifus.sub_command(
+    @manage_waifus.sub_command(
         description="add a whole list of waifus defined in a CSV to your server"
     )
-    async def pullCSV(
+    async def pull_csv(
         self,
         inter:ApplicationCommandInteraction,
         csv:Attachment, 
@@ -111,13 +111,13 @@ class ServerOptionsCog(commands.Cog):
         self,
         inter:ApplicationCommandInteraction,
         setting:Server.ServerOption=commands.Param(description="option to set"),
-        setValue:int= commands.Param(default=-1,ge=0,description="value to set option to")
+        set_value:int= commands.Param(default=-1,ge=0,description="value to set option to")
     ):
         guild=self.bot.servers[inter.guild.id]
-        if setValue == -1:
+        if set_value == -1:
             #show value
             await self.bot.respond(inter,'OPTION.GET',setting,guild.options[setting])
         else:
             #set value
-            guild.options[setting]=setValue
-            await self.bot.respond(inter,'OPTION.SET',setting,setValue)
+            guild.options[setting]=set_value
+            await self.bot.respond(inter,'OPTION.SET',setting,set_value)

@@ -41,7 +41,7 @@ class WaifuCog(commands.Cog):
             await self.bot.respond(button_inter,'WAIFU.ADD.APPROVE',name)
             #set the buttons to allow removal
             removeButton=Button(label='remove',style=ButtonStyle.red,custom_id=f'approval|{imageHash}|remove')
-            await button_inter.edit_original_message(components=removeButton)
+            await button_inter.message.edit(components=removeButton)
         elif data[2] == 'reject':
             (*discard,name,source) = await database.removeApproval(imageHash) #we've interacted. remove the approval, and get the data
             self.logger.debug(f'rejecting {name}|{source}')
@@ -162,7 +162,7 @@ class WaifuCog(commands.Cog):
     @waifu.sub_command(
         description="get a list of waifus, either in this server, or available for pulls"
     )
-    async def getList(
+    async def get_list(
         self,
         inter:ApplicationCommandInteraction,
         scope:str=commands.Param(

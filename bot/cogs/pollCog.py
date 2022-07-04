@@ -38,7 +38,7 @@ class PollCog(commands.Cog):
             await self.bot.respond(button_inter,'WAIFU.POLL.VOTE.CLOSED',ephemeral=True)
 
     @commands.slash_command(
-    default_permission=Permissions(manage_messages=True),
+    default_member_permissions=Permissions(manage_messages=True),
     dm_permission=False
     )
     async def poll(
@@ -122,12 +122,12 @@ class PollCog(commands.Cog):
     async def results(
         self,
         inter:ApplicationCommandInteraction,
-        pollNum:int = commands.Param(-1,ge=0,description="Which poll to see results for")
+        poll_num:int = commands.Param(-1,ge=0,description="Which poll to see results for")
     ):
         pollGuild = self.bot.servers[inter.guild.id]
-        self.logger.debug(f'Getting results for {inter.guild.id} poll {pollNum}')
+        self.logger.debug(f'Getting results for {inter.guild.id} poll {poll_num}')
         try:
-            poll = pollGuild.polls[pollNum]
+            poll = pollGuild.polls[poll_num]
         except Exception: # wrong index error
             return ##TODO: await
         fig,axs = plt.subplots(2,2,squeeze=False,figsize=(8,8))
