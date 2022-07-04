@@ -38,7 +38,7 @@ sys.excepthook = log_uncaught_exceptions #override default hook to use the logge
 
 from headpatBot import HeadpatBot
 from cogs.pollCog import PollCog
-from cogs.utilityCogs import StorageCog, TestCog, HelpCog
+from cogs.utilityCogs import TimerCog, TestCog, HelpCog
 from cogs.managementCogs import ManageWaifusCog
 from cogs.waifuCogs import WaifuCog, GachaCog
 
@@ -53,7 +53,7 @@ else:
 
 #register the cogs
 bot.add_cog(HelpCog(bot))
-bot.add_cog(StorageCog(bot))
+bot.add_cog(TimerCog(bot))
 bot.add_cog(PollCog(bot))
 bot.add_cog(ManageWaifusCog(bot))
 bot.add_cog(WaifuCog(bot))

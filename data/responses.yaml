@@ -71,7 +71,7 @@ WAIFU: #waifu
       UNCLAIMED:
         - 'Rating: {0}'
       CLAIMED:
-        - 'Claimed by {1}[NEWLINE]Rating: {0}'
+        - 'Claimed by {1} at {2}[NEWLINE]Rating: {0}'
   REMOVE: #remove
     PASS:
       - Okay! {0} is gone. Less competition for me!

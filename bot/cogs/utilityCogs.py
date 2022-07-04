@@ -11,14 +11,16 @@ from disnake import ApplicationCommandInteraction, File
 from disnake.ext import commands, tasks
 import yaml
 
-class StorageCog(commands.Cog):
+class TimerCog(commands.Cog):
     def __init__(self,bot:HeadpatBot):
         self.bot=bot
         self.logger=logging.getLogger(os.environ['LOGGER_NAME'])
-        self.lock=Lock()
+        self.dbLock=Lock()
+        self.expiryLock=Lock()
         self.loadFiles.start()
         self.storeFiles.start()
         self.storeDatabase.start()
+        self.expireWaifuClaims.start()
 
     def cog_unload(self):
         self.logger.info('Storage Cog Unloading')
@@ -30,7 +32,7 @@ class StorageCog(commands.Cog):
 
     @tasks.loop(hours=4)
     async def storeFiles(self):
-        async with self.lock:
+        async with self.dbLock:
             self.logger.info('Saving Files')
             for server in self.bot.servers.values():
                 server.save()
@@ -39,7 +41,7 @@ class StorageCog(commands.Cog):
     @storeFiles.after_loop
     async def storeDatabase(self):
         self.logger.info('Saving filesystem to database')
-        async with self.lock:
+        async with self.dbLock:
             for server in self.bot.servers.values():
                 await database.storeGuildPickle(server)
             for waifuImage in glob.glob('*/*/*.qoi',root_dir=images.POLL_FOLDER):
@@ -54,7 +56,7 @@ class StorageCog(commands.Cog):
 
     @tasks.loop(hours=6)
     async def loadFiles(self):
-        async with self.lock:
+        async with self.dbLock:
             self.logger.info('Fetching from Database to File System')
             allWaifus=await database.getAllWaifus()
             for waifu in allWaifus:
@@ -68,6 +70,12 @@ class StorageCog(commands.Cog):
             for guildId in allGuilds:
                 guild = await database.getGuildPickle(guildId)
                 guild.save()
+
+    @tasks.loop(hours=3)
+    async def expireWaifuClaims(self):
+        async with self.expiryLock:
+            for serverId in self.bot.servers:
+                self.bot.servers[serverId].releaseWaifus()
 
 class HelpCog(commands.Cog):
     bufferLimit = 1750 #how many characters before we force dump

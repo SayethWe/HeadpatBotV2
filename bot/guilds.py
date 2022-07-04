@@ -23,6 +23,7 @@ class Server:
         PollWaifuImageSizePixels='waifuImageSize' #how many pixels to make the tiles in the poll collage, unused
         PollStartNextGapHours='pollNextDelay' #how long to wait after endeing a poll to start the next, unused
         GachaMaxWaifus='gachaMaximumCollection'
+        GachaExpiryHours='gachaExpiryTime'
 
     @staticmethod
     def defaultOptions():
@@ -35,6 +36,7 @@ class Server:
         options[Server.ServerOption.PollWaifuImageSizePixels.value]=500
         options[Server.ServerOption.PollStartNextGapHours.value] = 24
         options[Server.ServerOption.GachaMaxWaifus.value] = 8
+        options[Server.ServerOption.GachaExpiryHours.value] = 150
         return options
     
     def __init__(self,identity):
@@ -198,3 +200,8 @@ class Server:
 
     def claimedWaifus(self,userId:int) -> list[Waifu]:
         return [waifu for waifu in self.waifus if waifu.claimer == userId]
+
+    def releaseWaifus(self):
+        for waifu in self.waifus:
+            if waifu.hoursSinceClaimed > self.options[Server.ServerOption.GachaExpiryHours.value]:
+                waifu.release()

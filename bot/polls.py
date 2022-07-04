@@ -1,5 +1,7 @@
 import logging, os
 from enum import Enum
+from datetime import datetime, timedelta, timezone
+from time import time
 import numpy as np
 import matplotlib.pyplot  as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
@@ -13,6 +15,8 @@ from headpatExceptions import InsufficientOptionsError
 logger = logging.getLogger(os.environ['LOGGER_NAME'])
 
 class Waifu():
+    DEFAULT_CLAIM_TIME=datetime(1970,1,1,tzinfo=timezone.utc)
+
     """
     A server-side Waifu
     """
@@ -21,6 +25,7 @@ class Waifu():
         self.source=source
         self.rating=rating
         self._claimer=0
+        self._claimedAt=Waifu.DEFAULT_CLAIM_TIME
 
     def __repr__(self):
         return f'{self.name} is a waifu from {self.source} with a rating of {self.rating}'
@@ -36,8 +41,32 @@ class Waifu():
             self._claimer=0 #more backwards compatibility code
         return self._claimer
 
+    @property
+    def claimedAt(self) -> datetime:
+        try:
+            return self._claimedAt
+        except AttributeError:
+            if self.claimer == 0:
+                self._claimedAt=Waifu.DEFAULT_CLAIM_TIME
+            else:
+                self._claimedAt=datetime.now(timezone.utc)
+        return self._claimedAt
+
+    @property
+    def hoursSinceClaimed(self) -> float:
+        if self.claimedAt==Waifu.DEFAULT_CLAIM_TIME:
+            return 0
+        else:
+            delta = datetime.now(timezone.utc)-self.claimedAt
+            return delta.days*24+delta.seconds/3600
+
     def claim(self,claimer:int):
         self._claimer=claimer
+        self._claimedAt=datetime.now(timezone.utc)
+
+    def release(self):
+        self._claimer=0
+        self._claimedAt=Waifu.DEFAULT_CLAIM_TIME
 
 class Poll:
     """

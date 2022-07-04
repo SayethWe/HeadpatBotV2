@@ -153,7 +153,7 @@ class WaifuCog(commands.Cog):
                 footer_text=self.bot.getResponse('WAIFU.SHOW.FOOTER.UNCLAIMED',serverSide.rating)
             else:
                 claimer = await inter.guild.getch_member(serverSide.claimer)
-                footer_text=self.bot.getResponse('WAIFU.SHOW.FOOTER.CLAIMED',serverSide.rating,claimer.display_name)
+                footer_text=self.bot.getResponse('WAIFU.SHOW.FOOTER.CLAIMED',serverSide.rating,claimer.display_name,serverSide.claimedAt.strftime("%Y/%m/%d %H:%M %Z"))
             embed.set_footer(text=footer_text)
         except WaifuDNEError:
             pass #waifu did not exist serverside
