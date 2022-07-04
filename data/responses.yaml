@@ -59,6 +59,12 @@ WAIFU: #waifu
       - approved {0}
     DENY:
       - rejected {0}
+    EDIT:
+      - modified approval for {0}
+    EXISTS:
+      - I'm pretty sure I already have that image somewhere
+    APPROVING:
+      - Someone has already asked for that image previously
     REMOVE:
       ONE:
         - deleted an image for {0}

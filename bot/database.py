@@ -103,4 +103,13 @@ async def removeApproval(id:int) -> tuple[bytes,str,str] :
     data = await doCommandReturn(cmdString,id)
     return (qoi.decode(data.get('data')),data.get('name'),data.get('source'))
 
+async def getApproval(id:int) -> tuple[str,str]:
+    cmdString="SELECT name, source FROM approvals WHERE hash = $1"
+    data = await doCommandReturn(cmdString,id)
+    return (data.get('name'),data.get('source'))
+
+async def modifyApproval(id:int,newName:str,newSource:str) -> None:
+    cmdString="UPDATE approvals SET name = $2, source = $3 WHERE hash = $1"
+    await doCommand(cmdString,id,newName,newSource)
+
 asyncio.get_event_loop().run_until_complete(createTables()) #block until we ensure all tables are created

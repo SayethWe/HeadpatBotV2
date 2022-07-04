@@ -8,8 +8,8 @@ from injections import WaifuData, folderWaifu, nameSourceWaifu, gachaWaifu
 import images, database
 from headpatBot import HeadpatBot
 #library imports
-from disnake import ApplicationCommandInteraction, Embed, File, Attachment, MessageInteraction, Webhook, ButtonStyle
-from disnake.ui import Button
+from disnake import ApplicationCommandInteraction, Embed, File, Attachment, MessageInteraction, ModalInteraction, Webhook, ButtonStyle
+from disnake.ui import Button, Modal, TextInput
 from disnake.ext import commands
 
 class WaifuCog(commands.Cog):
@@ -22,7 +22,7 @@ class WaifuCog(commands.Cog):
         data = button_inter.component.custom_id.split('|')
         if data[0] != 'approval':
             return
-        await button_inter.response.defer()
+        #await button_inter.response.defer()
         imageHash = int(data[1])
         if data[2] == 'accept':
             (imageArray,name,source) = await database.removeApproval(imageHash) #we've interacted. remove the approval, and get the data
@@ -43,11 +43,20 @@ class WaifuCog(commands.Cog):
             removeButton=Button(label='remove',style=ButtonStyle.red,custom_id=f'approval|{imageHash}|remove')
             await button_inter.message.edit(components=removeButton)
         elif data[2] == 'reject':
-            (*discard,name,source) = await database.removeApproval(imageHash) #we've interacted. remove the approval, and get the data
+            (*discard,name,source) = await database.removeApproval(imageHash) #we've interacted. remove the approval, and ignore the data
             self.logger.debug(f'rejecting {name}|{source}')
             await self.bot.respond(button_inter,'WAIFU.ADD.DENY',name)
             #remove the buttons
             await button_inter.edit_original_message(components=None)
+        elif data[2] == 'modify':
+            (oldName,oldSource) = await database.getApproval(imageHash)
+            #create and send an edit modal
+            editName = TextInput(label = "edit waifu name",custom_id=f"editName",value=oldName)
+            editSource = TextInput(label = "edit waifu name",custom_id=f"editSource",value=oldSource)
+            await button_inter.response.send_modal(
+                title='edit waifu approval',
+                components=[editName,editSource],
+                custom_id=f'approval|{imageHash}|editModal|{button_inter.id}')
         elif data[2] == 'remove':
             #remove waifu from:
             #database
@@ -70,6 +79,18 @@ class WaifuCog(commands.Cog):
                 await self.bot.respond(button_inter,'WAIFU.ADD.REMOVE.ONE',name)
             #remove the buttons
             await button_inter.edit_original_message(components=None)
+
+    @commands.Cog.listener(name="on_modal_submit")
+    async def approvalEditHandler(self,modal_inter:ModalInteraction):
+        data = modal_inter.custom_id.split('|')
+        if data[0] != 'approval':
+            return
+        imageHash = int(data[1])
+        newName = modal_inter.text_values['editName']
+        newSource = modal_inter.text_values['editSource']
+        await modal_inter.message.edit(content=self.bot.getResponse('WAIFU.ADD.ASK',newName,newSource))
+        await database.modifyApproval(imageHash,newName,newSource)
+        await self.bot.respond(modal_inter,'WAIFU.ADD.EDIT',newName,ephemeral=True)
 
     # Headpat
     @commands.slash_command(
@@ -105,20 +126,37 @@ class WaifuCog(commands.Cog):
         if image.content_type.startswith('image'): #ensure it's actually an image
             name=waifuData.name
             source=waifuData.source
+            imageHash=hash(image)
+            #check to be sure image does not exist
+            try:
+                existingData=await database.loadWaifu(imageHash)
+            except AttributeError:
+                existingData = None
+            if existingData is not None:
+                await self.bot.respond(inter,'WAIFU.ADD.EXISTS')
+                return
+            #or that it's not waiting for approval
+            try:
+                existingData=await database.getApproval(imageHash)
+            except AttributeError:
+                existingData=None
+            if existingData is not None:
+                await self.bot.respond(inter,'WAIFU.ADD.APPROVING')
+                return
             await self.bot.respond(inter,'WAIFU.ADD.WAIT') #tell the user it's in consideration
             #send it off the the approval system
-            imageHash=hash(image)
             imageBytes=io.BytesIO(await image.read())
             sendAttachment=await image.to_file()
             await database.addApproval(imageHash,images.bytesToArray(imageBytes),name,source)
             acceptButton=Button(label='accept',style=ButtonStyle.green,custom_id=f'approval|{imageHash}|accept')
+            editButton=Button(label='edit',style=ButtonStyle.blurple,custom_id=f'approval|{imageHash}|modify')
             rejectButton=Button(label='reject',style=ButtonStyle.red,custom_id=f'approval|{imageHash}|reject')
             #get the channel to approve in (needs to be channel because buttons)
             announceChannel=self.bot.get_channel(os.environ['APPROVAL_CHANNEL'])
             if announceChannel is None:
                 announceChannel = await self.bot.fetch_channel(os.environ['APPROVAL_CHANNEL'])
             await self.bot.respond(announceChannel,'WAIFU.ADD.ASK',name,source,
-                components=[acceptButton,rejectButton],
+                components=[acceptButton,editButton,rejectButton],
                 file=sendAttachment)
         else:
             await self.bot.respond(inter,'WAIFU.ADD.NOT_IMAGE')
