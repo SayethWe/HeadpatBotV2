@@ -238,7 +238,10 @@ class GachaCog(commands.Cog):
         except InsufficientTicketsError:
             await self.bot.respond(inter,'GACHA.ROLL.INSUFFICIENT',ephemeral=True)
         except InsufficientOptionsError:
-            await self.bot.respond(inter,'GACHA.ROLL.',ephemeral=True)
+            await self.bot.respond(inter,'GACHA.ROLL.NONE',ephemeral=True)
+            server.modifyTickets(userId,spend)
+        except UnreachableOptionsError:
+            await self.bot.respond(inter,'GACHA.ROLL.OUT_OF_RANGE',ephemeral=True)
         except CollectionFullError:
             await self.bot.respond(inter,'GACHA.ROLL.FULL',ephemeral=True)
 

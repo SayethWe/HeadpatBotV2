@@ -134,3 +134,5 @@ GACHA:
       - You've already got too many waifus.
     NONE:
       - There are no claimable waifus left in this server.
+    OUT_OF_RANGE:
+      - No claimable waifus can be rolled for that amount of tickets

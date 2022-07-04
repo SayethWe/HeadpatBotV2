@@ -144,11 +144,16 @@ class Server:
             raise CollectionFullError
         rng=np.random.default_rng()
         #get available waifus and their ratings
-        available = [waifu for waifu in self.waifus if waifu.claimer == 0 and waifu.rating >= 0]
+        available = [waifu for waifu in self.waifus if waifu.claimer == 0]
+        if not available:
+            raise InsufficientOptionsError
         ratings=np.array([waifu.rating for waifu in available])
         #generate pick probabilities
-        weights=np.mean(ratings)/((tickets-ratings)**2+1)+np.std(ratings)
-        p=weights/sum(weights) #as probabilities
+        weights=Server.weightsParabolicPiecewise(ratings,tickets,1,3)
+        p=weights/np.sum(weights) #as probabilities
+        if not np.any(p):
+            #can't roll any waifus
+            raise UnreachableOptionsError
         try:
             #pick one
             choice = rng.choice(available,1,p=p)[0]
@@ -157,6 +162,39 @@ class Server:
             #error means there are no unclaimed left
             raise InsufficientOptionsError
         return choice
+    
+    @staticmethod
+    def weightsBellLike(ratings,tickets:int):
+        return np.piecewise(ratings,[ratings<0,ratings>=0],[0,lambda ratings: np.mean(ratings)/((tickets-ratings)**2+1)+np.std(ratings)])
+
+    @staticmethod
+    def weightsLinearPiecewise(ratings,tickets,zeroWeight,maxWeight):
+        s=np.std(ratings)
+        if s<1:
+            s=(np.max(ratings)-tickets)/2 #ratings are not very diverse, stretch out
+        if s<1:
+            s=1 #just to be sure it's not 0 or negative
+        m1=(maxWeight-zeroWeight)/tickets
+        b1=zeroWeight
+        m2=-maxWeight/s
+        b2=maxWeight*(tickets+s)/s
+        return np.piecewise(ratings,[ratings<0,(0<=ratings)&(ratings<=tickets),(tickets<ratings)&(ratings<=tickets+s),(tickets+s)<ratings],[0,lambda r: m1*r+b1,lambda r: m2*r+b2, 0])
+
+
+    @staticmethod
+    def weightsParabolicPiecewise(ratings,tickets,zeroWeight,maxWeight):
+        s=np.std(ratings)
+        if s<1:
+            s=(np.max(ratings)-tickets)/2 #ratings are not very diverse, stretch out
+        if s<1:
+            s=1 #just to be sure it's not 0 or negative
+        a1=-(maxWeight-zeroWeight)/(tickets*tickets)
+        b1=2*(maxWeight-zeroWeight)/tickets
+        c1=zeroWeight
+        a2=-maxWeight/(s*s)
+        b2=2*maxWeight*tickets/(s*s)
+        c2=maxWeight-maxWeight*tickets*tickets/(s*s)
+        return np.piecewise(ratings,[ratings<0,(0<=ratings)&(ratings<=tickets),(tickets<ratings)&(ratings<=tickets+s),(tickets+s)<ratings],[0,lambda r: a1*r*r+b1*r+c1,lambda r: a2*r*r+b2*r+c2, 0])
 
     def claimedWaifus(self,userId:int) -> list[Waifu]:
         return [waifu for waifu in self.waifus if waifu.claimer == userId]
