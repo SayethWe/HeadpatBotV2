@@ -279,6 +279,7 @@ class GachaCog(commands.Cog):
             await self.bot.respond(inter,'GACHA.RELEASE.SUCCESS',refund)
         except WaifuDNEError:
             await self.bot.respond(inter,'WAIFU.ERROR.NOT_IN_SERVER')
+
     @gacha.sub_command(
         description="spend some tickets to improve a waifu"
     )

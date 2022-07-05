@@ -40,6 +40,8 @@ WAIFU: #waifu
       - Who? I don't know of anyone called {0} in {1}
     CONFLICT:
       - you already have {0} here, Silly.
+    NOT_IN_SERVER:
+      - "{0} isn't in this server"
   ADD: #suggest
     NOT_IMAGE:
       - That's not an image, silly
@@ -71,7 +73,7 @@ WAIFU: #waifu
       UNCLAIMED:
         - 'Rating: {0}'
       CLAIMED:
-        - 'Claimed by {1} at {2}[NEWLINE]Rating: {0}'
+        - 'Claimed by {1} at {2}[NEWLINE]Level: {3}[NEWLINE]Rating: {0}'
   REMOVE: #remove
     PASS:
       - Okay! {0} is gone. Less competition for me!
@@ -136,3 +138,15 @@ GACHA:
       - There are no claimable waifus left in this server.
     OUT_OF_RANGE:
       - No claimable waifus can be rolled for that amount of tickets
+  RELEASE:
+    NOT_OWNER:
+      - "{0} is not your waifu to unclaim!"
+    SUCCESS:
+      - Waifu back in pool! You got {0} tickets back
+  IMPROVE:
+    NOT_OWNER:
+      - "{0} is not your waifu!"
+    TOO_EXPENSIVE:
+      - You don't have the {0} tickets required
+    SUCCESS: 
+      - spent {0} tickets to raise {1} to level {2}

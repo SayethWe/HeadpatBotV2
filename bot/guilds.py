@@ -1,6 +1,7 @@
 from __future__ import annotations #allows factory type annotations
 from enum import Enum
 import os, logging
+from math import sqrt
 import images
 import pickle
 from polls import Poll, Waifu
@@ -203,5 +204,11 @@ class Server:
 
     def releaseWaifus(self):
         for waifu in self.waifus:
-            if waifu.hoursSinceClaimed > self.options[Server.ServerOption.GachaExpiryHours.value]:
+            if self.timeLeft(waifu) <= 0:
                 waifu.release()
+
+    def timeLeft(self,waifu:Waifu):
+        if waifu not in self.waifus:
+            raise WaifuDNEError
+        baseTime = self.options[Server.ServerOption.GachaExpiryHours.value]*sqrt(waifu.level)
+        return baseTime - waifu.hoursSinceClaimed
