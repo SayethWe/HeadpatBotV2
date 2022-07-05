@@ -8,10 +8,10 @@ QUICKSTART:
   - view tickets earned fom poll participation with `/tickets get`
   - spend tickets to claim a random server waifu with `/gacha roll [ticketsToSpend]`
   - Use `/help [command name]` to see more information on headpatbot's capabilities`
-Headpat:
+headpat:
   - this gets you a headpat.
   - optionally, you can select a number of headpats, maximum four, to get at once.
-Waifu:
+waifu:
   - Interacts with waifus headpatbot knows of in various ways
   - To inform headpatbot of a new waifu, or an image for one already known, use `/waifu suggest`, attaching an image and specifying the waifu's name and source material.
   - Suggested waifus are subject to a manual review process, and will be announced in the development server when approved.
@@ -20,27 +20,34 @@ Waifu:
   - If the waifu has been pulled into the server, it will also show the local rating and what user, if any, has claimed that waifu.
   - ''
   - Finally, `/waifu getList` allows inspecition of what waifus are available globally, in the server, or available to pull.
-ManageWaifus:
+manage_waifus:
   - Allows for server interactions with waifus.
-  - add one waifu at a time with `/managewaifus pull`, or multiple at once with `/managewaifus pullcsv`. The CSV may have any number of columns, but the first two must be `name,source`
-  - remove previously added waifus with `/managewaifus remove`
+  - add one waifu at a time with `/manage_waifus pull`, or multiple at once with `/manage_waifus pull_csv`. The CSV may have any number of columns, but the first two must be `name,source`
+  - remove previously added waifus with `/manage_waifus remove`
   - ''
   - This is a command family that is likely best restricted to trusted members in the server integration settings
-Poll:
+poll:
   - Waifu polls are the fundamental way to create inter-user interaction.
   - Once there are enough waifus added to a server (>15 by default), `/poll start` can be run to create a waifu poll.
   - Users can vote privately on which waifus they like, and confirm their votes.
   - When users have voted, run `/poll close` to calculate the results and update waifu ratings
   - A results graph will also be shared that can be viewed again with `/poll results`
+  - polls distribute tickets to users who voted, and to those who had claimed waifus in the poll
   - ''
   - It is reccomended to use the integration settings in your server to make these commands restricted
-Gacha:
+  - ""
+  - "`/jump_to_poll` will provide a link to easily get to the latest poll in the server"
+gacha:
   - The way to claim a waifu for your own
   - '`/tickets get` will show how many tickets you;ve earned from poll participation'
   - spend tickets with `/gacha roll` to claim a random waifu, weighted so that waifus with ratings close to the number of tickets spent are more likely
   - see which waifus you've claimed with `/gacha collection`
-  - Waifu trading via auction, as well as improvement and poll-performance-based ticket earning are under development
-Options:
+  - using /gacha improve will spend tickets to increase the level of a claimed waifu
+  - ''
+  - waifus are automatically un-claimed and returned to the pool after a set amount of time
+  - higher leveled waifus will remain claimed longer, but do eventually release as well
+  - declaiming a waifu early with `/gacha remove` will refund some tickets, based on the waifu's rating, level, and how long was remaining before automatic return
+options:
   - setting server side options is not yet supported, but is planned.
 ADD_ME:
   - You want *me* in **your** server?
