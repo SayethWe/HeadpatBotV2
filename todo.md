@@ -33,17 +33,19 @@ _Future Feature_
 
 - [x] **create server options**
 - [x] **create default values**
-- [ ] set limits per options
+- [x] set limits per options
 
 ## Commands
 
 - [x] **permission checks**
-- [ ] configurable permissions
-    - can use commands.check_any, need to find what check(s) can easily be configured user-side
+- ~~[x] configurable permissions~~
+    - ~~can use commands.check_any, need to find what check(s) can easily be configured user-side~~
+    - permissions v2 covers this
+    - [ ] set default permissions
 
 ### Help command
 
-- [ ] implement
+- [x] implement
 - [x] **add documentation to commands**
 
 ### Waifus and images
@@ -78,17 +80,18 @@ _Future Feature_
     - [x] collect votes
     - [x] update waifu ratings
 - [ ] alert participants
-- [ ] fancy graphics
+- [x] fancy graphics
     - [x] Vote histogram
     - [x] Expected performance vs actual performance
-    - [ ] rating changes
+    - [x] rating changes
 
 ---
 ## Gacha Game  
-- [ ] _pull from server waifus_
-    - [ ] spend tickets to improve your waifus somehow
+- [x] _pull from server waifus_
+    - [x] spend tickets to improve your waifus somehow
 - [x] _earn tickets for participating in polls_
-    - [ ] Earn tickets when your waifus are voted for by users other than you
+    - [x] Earn tickets when your waifus are voted for by users other than you
+- [x] waifu claim expiry
 - [ ] _some kind of minigame?_
 
 ---

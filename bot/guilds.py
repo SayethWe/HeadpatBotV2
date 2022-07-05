@@ -14,8 +14,46 @@ if not os.path.exists(SAVE_FOLDER):
     os.makedirs(SAVE_FOLDER)
 logger = logging.getLogger(os.environ['LOGGER_NAME'])
 
+class ServerOption(Enum):
+        PollWaifuCount=('poll waifu count',8,2,24) #how many waifus to put in a poll
+        PollWaifuImageSizePixels=('poll waifu image vertical pixels',500,100,800) #how many pixels to make the tiles in the poll collage, unused
+        PollWaifuImageAspect=('poll waifu image aspect percent',100,50,200)#width/height*100, unused
+        GachaMaxWaifus=('gacha collection max count',8,0,25)
+        GachaExpiryHours=('gacha collection expiration hours',150,5,10000)
+
+        @property
+        def defaultOptions() -> dict[str,int]:
+            options=dict[str,int]()
+            for option in ServerOption:
+                options[option.value[0]]=option.value[1]
+            return options
+
+        @property
+        def defaultValue(self) -> int:
+            return self.value[1]
+
+        @property
+        def key(self) -> str:
+            return self.value[0]
+
+        @property
+        def min(self) -> int:
+            return self.value[2]
+
+        @property
+        def max(self) -> int:
+            return self.value[3]
+
 class Server:
+    def __init__(self,identity):
+        self.identity = identity
+        self.waifus=list[Waifu]()
+        self.polls=list[Poll]()
+        self.options=ServerOption.defaultOptions
+        self.tickets=dict[int,int]()
+
     class ServerOption(Enum):
+        #need to stick around for backward compatibility. Figure out how to get rid of these in stored guilds. all unused except when unpickling
         PollWaifuCount='pollSize' #how many waifus to put in a poll
         PollParticipationCheckStartHours='pollCheckZero' #when to start checking for poll participations
         PollParticipationCheckDeltaHours='pollCheckDelta' #how often to check poll participation
@@ -26,26 +64,19 @@ class Server:
         GachaMaxWaifus='gachaMaximumCollection'
         GachaExpiryHours='gachaExpiryTime'
 
-    @staticmethod
-    def defaultOptions():
-        options=dict[str,int]()
-        options[Server.ServerOption.PollWaifuCount.value]=8
-        options[Server.ServerOption.PollParticipationCheckStartHours.value]=36
-        options[Server.ServerOption.PollParticipationCheckDeltaHours.value]=2
-        options[Server.ServerOption.PollEndHours.value]=48
-        options[Server.ServerOption.PollParticipationCheckCount.value]=6
-        options[Server.ServerOption.PollWaifuImageSizePixels.value]=500
-        options[Server.ServerOption.PollStartNextGapHours.value] = 24
-        options[Server.ServerOption.GachaMaxWaifus.value] = 8
-        options[Server.ServerOption.GachaExpiryHours.value] = 150
-        return options
-    
-    def __init__(self,identity):
-        self.identity = identity
-        self.waifus=list[Waifu]()
-        self.polls=list[Poll]()
-        self.options=Server.defaultOptions()
-        self.tickets=dict[int,int]()
+    def getOption(self,option:ServerOption) -> int:
+        try:
+            return self.options[option.key]
+        except AttributeError:
+            self.options = ServerOption.defaultOptions()
+        except KeyError:
+            self.options[option.key]=option.defaultValue
+        return self.options[option.key]
+
+    def setOption(self,option:ServerOption,value:int):
+        if value < option.min or value > option.max:
+            raise InvalidOptionValueError
+        self.options[option.key]=value
 
     def addWaifu(self,name:str,source:str):
         if os.path.exists(os.path.join(images.POLL_FOLDER,images.sourceNameFolder(name,source))):
@@ -79,20 +110,9 @@ class Server:
         try:
             with open(os.path.join(SAVE_FOLDER,f'{identity}.p'),'rb') as loadFile:
                 loaded = pickle.load(loadFile)
-            for option in Server.ServerOption:
-                try:
-                    loaded.options[option.value]
-                except(AttributeError):
-                    #options do not exist
-                    logger.info(f'{loaded.identity} did not have options. Creating defaults')
-                    loaded.options=Server.defaultOptions()
-                except(KeyError):
-                    #option not in existence
-                    logger.info(f'{loaded.identity} was missing a value for {option}. Setting to default.')
-                    loaded.options[option.value]=Server.defaultOptions()[option.value]
-            return loaded
         except FileNotFoundError:
-            return Server(identity)
+            loaded=Server(identity)
+        return loaded
 
     def getWaifuByNameSource(self,name:str,source:str):
         selectedWaifus = [waifu for waifu in self.waifus if waifu.name==name and waifu.source==source]
@@ -143,7 +163,7 @@ class Server:
         return self.tickets[user]
 
     def waifuRoll(self,userId:int,tickets:int) -> Waifu:
-        if len([waifu for waifu in self.waifus if waifu.claimer == userId]) >= self.options[Server.ServerOption.GachaMaxWaifus.value]:
+        if len([waifu for waifu in self.waifus if waifu.claimer == userId]) >= self.getOption(ServerOption.GachaMaxWaifus):
             raise CollectionFullError
         rng=np.random.default_rng()
         #get available waifus and their ratings
@@ -210,5 +230,5 @@ class Server:
     def timeLeft(self,waifu:Waifu):
         if waifu not in self.waifus:
             raise WaifuDNEError
-        baseTime = self.options[Server.ServerOption.GachaExpiryHours.value]*sqrt(waifu.level)
+        baseTime = self.getOption(ServerOption.GachaExpiryHours)*sqrt(waifu.level)
         return baseTime - waifu.hoursSinceClaimed

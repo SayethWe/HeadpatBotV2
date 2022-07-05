@@ -39,7 +39,7 @@ sys.excepthook = log_uncaught_exceptions #override default hook to use the logge
 from headpatBot import HeadpatBot
 from cogs.pollCog import PollCog
 from cogs.utilityCogs import TimerCog, TestCog, HelpCog
-from cogs.managementCogs import ManageWaifusCog
+from cogs.managementCogs import ManageWaifusCog, ServerOptionsCog
 from cogs.waifuCogs import WaifuCog, GachaCog
 
 #set up the bot
@@ -58,6 +58,7 @@ bot.add_cog(PollCog(bot))
 bot.add_cog(ManageWaifusCog(bot))
 bot.add_cog(WaifuCog(bot))
 bot.add_cog(GachaCog(bot))
+bot.add_cog(ServerOptionsCog(bot))
 if 'TEST_ENV' in os.environ:
     #devopment commands
     bot.add_cog(TestCog(bot))

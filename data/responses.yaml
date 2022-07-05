@@ -19,11 +19,11 @@ HELP:
   - I'm baring my soul here. Don't abuse it.
 OPTION:
   GET:
-  - value of {0} is {1}
+  - value of **{0}** is {1}
   SET:
-  - setting option {0} to {1}
-  INVALID:
-  - value {1} is outside range for {0}responde
+  - setting option **{0}** to {1}
+  RANGE:
+  - value {1} is outside range for {0}. Value must be between {2} and {3}
 HEADPAT:
   FAIL:
     - \*sob\* Something kept me from giving you a headpat

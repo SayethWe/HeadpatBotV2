@@ -7,7 +7,7 @@ from headpatExceptions import *
 from injections import WaifuData, folderWaifu, nameSourceWaifu, gachaWaifu
 import images, database
 from headpatBot import HeadpatBot
-from guilds import Server
+from guilds import ServerOption
 #library imports
 from disnake import ApplicationCommandInteraction, Embed, File, Attachment, MessageInteraction, ModalInteraction, Webhook, ButtonStyle
 from disnake.ui import Button, Modal, TextInput
@@ -311,7 +311,7 @@ class GachaCog(commands.Cog):
             if waifu.claimer != inter.author.id:
                 await self.bot.respond(inter,'GACHA.RELEASE.NOT_OWNER')
                 return
-            refund = int(0.75*server.timeLeft(waifu)/server.options[Server.ServerOption.GachaExpiryHours.value]*waifu.rating)
+            refund = int(0.75*server.timeLeft(waifu)/server.getOption(ServerOption.GachaExpiryHours)*waifu.rating)
             server.modifyTickets(inter.author.id,refund)
             waifu.release()
             await self.bot.respond(inter,'GACHA.RELEASE.SUCCESS',refund)

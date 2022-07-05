@@ -3,7 +3,7 @@ import logging, os
 from io import BytesIO
 #local imports
 import images
-from guilds import Server
+from guilds import ServerOption
 from polls import Poll
 from headpatExceptions import InsufficientOptionsError
 from headpatBot import HeadpatBot
@@ -64,7 +64,7 @@ class PollCog(commands.Cog):
                 return
         quickLink = await inter.original_message()
         quickLink = quickLink.jump_url
-        newPoll=Poll(inter.guild.id,pollGuild.options[Server.ServerOption.PollWaifuCount.value],quickLink)
+        newPoll=Poll(inter.guild.id,pollGuild.getOption(ServerOption.PollWaifuCount),quickLink)
         pollInd=pollGuild.addPoll(newPoll)
         # to run a poll:
         # 1 select options
@@ -84,10 +84,10 @@ class PollCog(commands.Cog):
         await self.bot.respond(inter,'WAIFU.POLL.OPEN',pollInd,file=attachment,components=buttons)
         # 6 poll end
         #if (autoClose):
-        #    delay = pollGuild.options[guilds.Server.ServerOption.PollParticipationCheckStartHours.value]
-        #    delta=pollGuild.options[guilds.Server.ServerOption.PollParticipationCheckDeltaHours.value]
-        #    end = pollGuild.options[guilds.Server.ServerOption.PollEndHours.value]
-        #    threshold = pollGuild.options[guilds.Server.ServerOption.PollParticipationCheckCount.value]
+        #    delay = pollGuild.getOption(ServerOption.PollParticipationCheckStartHours)
+        #    delta=pollGuild.getOption(ServerOption.PollParticipationCheckDeltaHours)
+        #    end = pollGuild.getOption(ServerOption.PollEndHours)
+        #    threshold = pollGuild.getOption(ServerOption.PollParticipationCheckCount)
         #    pollCog = PollCheckCog(delay,delta,end,newPoll,threshold)
         #    pollCog.checkPoll.start()
 

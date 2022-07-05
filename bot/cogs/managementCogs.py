@@ -1,8 +1,8 @@
 #python imports
 import logging, os
 #local imports
-from headpatExceptions import WaifuConflictError, WaifuDNEError
-from guilds import Server
+from headpatExceptions import WaifuConflictError, WaifuDNEError, InvalidOptionValueError
+from guilds import ServerOption
 from headpatBot import HeadpatBot
 from injections import WaifuData, serverWaifu, missingWaifu
 #library imports
@@ -110,14 +110,18 @@ class ServerOptionsCog(commands.Cog):
     async def options(
         self,
         inter:ApplicationCommandInteraction,
-        setting:Server.ServerOption=commands.Param(description="option to set"),
+        setting=commands.Param(description="option to set",choices=[option.key for option in ServerOption]),
         set_value:int= commands.Param(default=-1,ge=0,description="value to set option to")
     ):
         guild=self.bot.servers[inter.guild.id]
+        option = [_option for _option in ServerOption if _option.key==setting][0]
         if set_value == -1:
             #show value
-            await self.bot.respond(inter,'OPTION.GET',setting,guild.options[setting])
+            await self.bot.respond(inter,'OPTION.GET',setting,guild.getOption(option))
         else:
             #set value
-            guild.options[setting]=set_value
-            await self.bot.respond(inter,'OPTION.SET',setting,set_value)
+            try:
+                guild.setOption(option,set_value)
+                await self.bot.respond(inter,'OPTION.SET',setting,set_value)
+            except InvalidOptionValueError:
+                await self.bot.respond(inter,'OPTION.RANGE',setting,set_value,option.min,option.max)
