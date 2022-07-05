@@ -1,7 +1,6 @@
 import logging, os
 from enum import Enum
-from datetime import datetime, timedelta, timezone
-from time import time
+from datetime import datetime, timezone
 import numpy as np
 import matplotlib.pyplot  as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
@@ -9,7 +8,7 @@ from numpy.random import default_rng
 from disnake.ui import Button, View
 from disnake import ButtonStyle
 from disnake.ui import Button
-from disnake import ButtonStyle, MessageInteraction
+from disnake import ButtonStyle
 from headpatExceptions import InsufficientOptionsError
 
 logger = logging.getLogger(os.environ['LOGGER_NAME'])
@@ -26,6 +25,7 @@ class Waifu():
         self.rating=rating
         self._claimer=0
         self._claimedAt=Waifu.DEFAULT_CLAIM_TIME
+        self._level=0
 
     def __repr__(self):
         return f'{self.name} is a waifu from {self.source} with a rating of {self.rating}'
@@ -60,13 +60,30 @@ class Waifu():
             delta = datetime.now(timezone.utc)-self.claimedAt
             return delta.days*24+delta.seconds/3600
 
+    @property
+    def level(self) -> int:
+        try:
+            return self._level
+        except AttributeError:
+            if self.claimer == 0:
+                self._level=1
+            else:
+                self._level=0
+        return self._level
+
     def claim(self,claimer:int):
         self._claimer=claimer
         self._claimedAt=datetime.now(timezone.utc)
+        self._level=1
 
     def release(self):
         self._claimer=0
         self._claimedAt=Waifu.DEFAULT_CLAIM_TIME
+        self._level=0
+        self.rating -= 1
+
+    def improve(self):
+        self._level+=1
 
 class Poll:
     """
@@ -128,6 +145,7 @@ class Poll:
             logger.debug('Unparticipated poll')
             return {}
         ratingChanges = self.ratingChanges() #determine how much the ratings change
+        awardPoints=dict[int,int]()
         #for each waifu in the poll
         for i in range(self.size):
             #remove any users who didn't confirm
@@ -136,14 +154,21 @@ class Poll:
             self.votes[i]=len(self.voters[i])
             #update the ratings
             self.waifus[i].updateRating(ratingChanges[i])
+            #award vote points to waifu claimer
+            Poll.addTicketsToDict(awardPoints,self.waifus[i].claimer,Poll.VOTING_TICKETS+int(self.votes[i]*np.log(self.waifus[i].level+1)))
         #for each user who voted
-        awardPoints=dict[int,int]()
         for userId in self.users:
-            #award points
-            amt=Poll.VOTING_TICKETS
-            awardPoints[userId]=amt
+            #award participation points
+            Poll.addTicketsToDict(awardPoints,userId,Poll.VOTING_TICKETS)
         self.open=False #after everything is done, close the poll, so if we error, it stays open.
         return awardPoints
+
+    @staticmethod
+    def addTicketsToDict(ticketsDict:dict[int,int],key:int,amt:int):
+        try:
+            ticketsDict[key]+=amt
+        except KeyError:
+            ticketsDict[key]=amt
 
     def countVotes(self):
         return len(self.users)

@@ -7,6 +7,7 @@ from headpatExceptions import *
 from injections import WaifuData, folderWaifu, nameSourceWaifu, gachaWaifu
 import images, database
 from headpatBot import HeadpatBot
+from guilds import Server
 #library imports
 from disnake import ApplicationCommandInteraction, Embed, File, Attachment, MessageInteraction, Webhook, ButtonStyle
 from disnake.ui import Button
@@ -153,7 +154,9 @@ class WaifuCog(commands.Cog):
                 footer_text=self.bot.getResponse('WAIFU.SHOW.FOOTER.UNCLAIMED',serverSide.rating)
             else:
                 claimer = await inter.guild.getch_member(serverSide.claimer)
-                footer_text=self.bot.getResponse('WAIFU.SHOW.FOOTER.CLAIMED',serverSide.rating,claimer.display_name,serverSide.claimedAt.strftime("%Y/%m/%d %H:%M %Z"))
+                footer_text=self.bot.getResponse('WAIFU.SHOW.FOOTER.CLAIMED',
+                    serverSide.rating,claimer.display_name,
+                    serverSide.claimedAt.strftime("%Y/%m/%d %H:%M %Z"),serverSide.level)
             embed.set_footer(text=footer_text)
         except WaifuDNEError:
             pass #waifu did not exist serverside
@@ -255,3 +258,50 @@ class GachaCog(commands.Cog):
         server=self.bot.servers[inter.guild.id]
         claimed=server.claimedWaifus(inter.author.id)
         await inter.send(claimed)
+
+    @gacha.sub_command(
+        description="unclaim a waifu and get some tickets back"
+    )
+    async def remove(
+        self,
+        inter:ApplicationCommandInteraction,
+        waifuData:WaifuData = commands.inject(gachaWaifu)
+    ):
+        server=self.bot.servers[inter.guild.id]
+        try:
+            waifu=server.getWaifuByNameSource(waifuData.name,waifuData.source)
+            if waifu.claimer != inter.author.id:
+                await self.bot.respond(inter,'GACHA.RELEASE.NOT_OWNER')
+                return
+            refund = int(0.75*server.timeLeft(waifu)/server.options[Server.ServerOption.GachaExpiryHours.value]*waifu.rating)
+            server.modifyTickets(inter.author.id,refund)
+            waifu.release()
+            await self.bot.respond(inter,'GACHA.RELEASE.SUCCESS',refund)
+        except WaifuDNEError:
+            await self.bot.respond(inter,'WAIFU.ERROR.NOT_IN_SERVER')
+    @gacha.sub_command(
+        description="spend some tickets to improve a waifu"
+    )
+    async def improve(
+        self,
+        inter:ApplicationCommandInteraction,
+        waifuData:WaifuData = commands.inject(gachaWaifu)
+    ):
+        server=self.bot.servers[inter.guild.id]
+        try:
+            waifu=server.getWaifuByNameSource(waifuData.name,waifuData.source)
+            if waifu.claimer != inter.author.id:
+                await self.bot.respond(inter,'GACHA.IMPROVE.NOT_OWNER')
+                return
+            cost = waifu.level*waifu.rating
+            try:
+                server.modifyTickets(inter.author.id,-cost)
+                waifu.improve()
+                await self.bot.respond(inter,'GACHA.IMPROVE.SUCCESS',cost,waifu.name,waifu.level)
+            except InsufficientTicketsError:
+                await self.bot.respond(inter,'GACHA.IMPROVE.TOO_EXPENSIVE',cost)
+                return
+        except WaifuDNEError:
+            await self.bot.respond(inter,'WAIFU.ERROR.NOT_IN_SERVER')
+            return
+        
