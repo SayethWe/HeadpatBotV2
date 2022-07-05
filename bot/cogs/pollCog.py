@@ -144,10 +144,10 @@ class PollCog(commands.Cog):
         figBytes.seek(0)
         await self.bot.respond(inter,'WAIFU.POLL.RESULTS',file=File(figBytes,filename="results.png"))
 
-    @poll.sub_command(
+    @commands.slash_command(
         description="Get a link to the latest poll"
     )
-    async def jump(
+    async def jump_to_poll(
         self,
         inter:ApplicationCommandInteraction
     ):
