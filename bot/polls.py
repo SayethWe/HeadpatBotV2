@@ -155,7 +155,7 @@ class Poll:
             #update the ratings
             self.waifus[i].updateRating(ratingChanges[i])
             #award vote points to waifu claimer
-            Poll.addTicketsToDict(awardPoints,self.waifus[i].claimer,Poll.VOTING_TICKETS+int(self.votes[i]*np.log(self.waifus[i].level+1)))
+            Poll.addTicketsToDict(awardPoints,self.waifus[i].claimer,Poll.VOTING_TICKETS+int(self.votes[i]*np.log(self.waifus[i].level*self.waifu[i].level+1)))
         #for each user who voted
         for userId in self.users:
             #award participation points
