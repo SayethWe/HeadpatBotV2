@@ -9,7 +9,7 @@ _Future Feature_
 - [ ] **Test Bot**
     - Will always need more testing
     - Commands
-        - [ ] headpat
+        - [x] headpat
         - [ ] options
         - [ ] waifu
             - [ ] suggest
@@ -41,7 +41,7 @@ _Future Feature_
 - ~~[x] configurable permissions~~
     - ~~can use commands.check_any, need to find what check(s) can easily be configured user-side~~
     - permissions v2 covers this
-    - [ ] set default permissions
+    - [x] set default permissions
 
 ### Help command
 
@@ -54,32 +54,32 @@ _Future Feature_
 - [x] suggest waifus/images for database
     1. [x] send message in approval channel
     2. [x] get approval 
-        - [ ] with any modifications
+        - [x] with any modifications
     3. [x] alert suggester/channel
 - [x] waifus can have multiple images
 - [x] **remove waifus**
 - [x] List Local Waifus
 - [x] List Global Waifus
 - [x] **Prevent Poll from Running when not enough Waifus**
-- [ ] Use Server TileSize setting
+- [x] Use Server TileSize setting
 - [ ] Smarter Face detection
 
 ### Waifu Poll
 - [x] **start poll**
-- Automation (optional)
-    - [ ] auto-start
-        - time since poll ended
-    - [ ] auto-end
-        - Minimum time with threshold
-            - Check Frequency
-        - Maximum Time
+- ~~Automation (optional)~~ 
+    - ~~[ ] auto-start~~ (impossible w/o send perms and tracking a channel)
+        ~~- time since poll ended~~
+    - ~~[ ] auto-end~~
+        - ~~Minimum time with threshold~~
+            - ~~Check Frequency~~
+        - ~~Maximum Time~~
 - Approval voting system
     - [x] Elo System
     - [x] Selection
     - [x] Running
     - [x] collect votes
     - [x] update waifu ratings
-- [ ] alert participants
+- ~~[ ] alert participants~~
 - [x] fancy graphics
     - [x] Vote histogram
     - [x] Expected performance vs actual performance

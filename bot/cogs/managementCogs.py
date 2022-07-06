@@ -105,7 +105,8 @@ class ServerOptionsCog(commands.Cog):
         self.logger=logging.getLogger(os.environ['LOGGER_NAME'])
 
     @commands.slash_command(
-        description="set server options"
+        description="set server options",
+        default_member_permissions=Permissions(manage_messages=True)
     )
     async def options(
         self,

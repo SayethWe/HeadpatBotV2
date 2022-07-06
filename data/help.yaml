@@ -49,12 +49,14 @@ gacha:
   - declaiming a waifu early with `/gacha remove` will refund some tickets, based on the waifu's rating, level, and how long was remaining before automatic return
   - whenever a waifu becomes unclaimed by any means, they will take a slight rating hit
 options:
-  - sets a server-side option
+  - sets a server-side option. If used without a `set_value` argument, will echo the current value
   - poll waifu count -> Number of waifus in each poll round. Between 2 and 24
   - poll waifu image vertical pixels -> vertical resolution of each waifu in a poll image. Between 100 and 800. Unused 
   - poll waifu image aspect percent -> aspect ratio (width/height) in percent of each tile in a poll image. Between 50 and 200. Unused
   - gacha collection max count -> number of waifus a member is allowed to have. Between 0 and 25
   - gacha collection expiration hours -> number of hours a level 1 waifu will stay claimed. Between 1 and 10,000
+  - ''
+  - This command family is designed to be used by moderators only
 ADD_ME:
   - You want *me* in **your** server?
   - YAY! just click below and we can get started!

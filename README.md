@@ -63,7 +63,7 @@ Suggest a waifu for inclusion in the main waifu database, or a new image for an 
 ##### /waifu show `waifu`
 Shows an image of a waifu in the database. If the waifu has multiple images, which one to use is selected randomly.
 
-##### /waifu getList `scope`
+##### /waifu get_list `scope`
 get a list of all waifus available as a txt file
 
 `scope`: how large to search
@@ -75,12 +75,18 @@ get a list of all waifus available as a txt file
 Family of gacha-game related commands
 
 ##### /gacha roll `spend`
-Roll a random unclaimed waifu from the server polls to collect
+Roll a random unclaimed waifu from the server polls to collect. Claimed waifus will eventually release back into the available pool
 
 `spend` : number of tickets to spend. More tickets tends to get higher rated waifus
 
 ##### /gacha collection
 See which waifus you've rolled
+
+##### /gacha improve `waifu`
+Spend tickets to increase the level of a waifu, lengthening the amount of time before it becomes unclaimed, as well as improving ticket income from poll votes
+
+##### /gacha remove `waifu`
+Immediately sends a waifu back to the available pool, and refunds some of the tickets spent, amount based on level and time remaining. 
 
 ##### /tickets get
 See how many tickets you have to spend on rolls
@@ -94,33 +100,39 @@ Begins a waifu poll. Posts an image collage of selected waifus, and creates butt
 ##### /poll end
 Manually end the most recent poll and calculate results
 
-##### /poll result `pollNum`
+##### /poll result `poll_num`
 Show the results graphs from any poll run after 4.2.0
 
 `pollNum` : index of the poll to get, where 0 is the first poll in the server. Defaults to the most recent poll.
 
-### /manageWaifus
+### /manage_waifus
 command family for managing server waifus. seperate command group to support command permissioning
 
 `waifu` fields support autocomplete. Represents a waifu as stored in minimal folder structure. that is: `source material`/`waifu name`
 
-##### /manageWaifus pull `waifu`
+##### /manage_waifus pull `waifu`
 Add a waifu from the master database to your server's waifupolls. Newly added waifus are always initialized with a rating of 1
 
-##### /manageWaifus remove `waifu`
+##### /manage_waifus remove `waifu`
 remove a waifu from your server
 
-##### /manageWaifus pullCSV `csv`
+##### /manage_waifus pull_csv `csv`
 Pull multiple waifus simulatenously using a csv file
 
 `csv`: A comma-seperated-values file, where each line contains a (`name`,`source`) pair in the first two columns. Data in other columns will be ignored.
 
+### /options `option set_value`
+get or set a server-side option.
+
+`option`: a selection of the desired option
+
+`set value`: optional integer to set the option to. if not included, command will echo the current value.
+
 ## Todo
 See Todo.md, but high level:
 
-Gacha Game
-More Options
 More Responses
+Minigame of some sort
 
 Contributions welcome, feel free to make pull requests.
 
@@ -129,8 +141,12 @@ Contributions welcome, feel free to make pull requests.
 Licensed under the GPLv3.0 license. See LICENSE file.
 
 ## Credits
-LordOfEnnui#8710: V0 reddit bot, V1 Implementation and methodology consultation.  
+LordOfEnnui#8710: V0 reddit bot, Implementation and methodology consultation.   
 Sayeth_We#0663: V1 Implementation, Equation Design, V2 Rewrite, Ongoing Development.
+
+### Rubber ducks:
+- PineappleHugs#0001
+- LordOfEnnui#8710
 
 ## Self hosting
 
