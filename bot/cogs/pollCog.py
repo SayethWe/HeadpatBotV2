@@ -75,7 +75,7 @@ class PollCog(commands.Cog):
             pollGuild.removePoll(newPoll)
             return
         # 2 create image
-        image = images.createPollImage(names,sources)
+        image = images.createPollImage(names,sources,pollGuild.getOption(ServerOption.PollWaifuImageSizePixels),pollGuild.getOption(ServerOption.PollWaifuImageAspect))
         imageBytes=images.imageToBytes(image)
         attachment = File(imageBytes, filename = 'poll.png')
         # 3 create vote buttons

@@ -219,7 +219,7 @@ def makeTile(image:Image.Image,width:int=500,height:int=500) -> Image.Image:
     left=(newWidth-width)/2
     top=0 
     image=image.resize((newWidth,newHeight)) #resize the image
-    box=(left,top,left+width,top+width) #TODO: set box to contain a found face
+    box=(left,top,left+width,top+height) #TODO: set box to contain a found face
     return image.crop(box)
 
 
@@ -310,7 +310,7 @@ def collage(images:list[Image.Image],width:int=4) -> Image.Image:
         i+=1
     return collage
 
-def createPollImage(names:list[str],sources:list[str]) -> Image.Image:
+def createPollImage(names:list[str],sources:list[str],tileHeight:int=500,tileAspectPercent:int=100) -> Image.Image:
     """
     Creates a postable waifupoll image from the namse and sources of waifus
 
@@ -329,10 +329,12 @@ def createPollImage(names:list[str],sources:list[str]) -> Image.Image:
     """
     assert(len(names)==len(sources))
     images=list[Image.Image]()
+    tileWidth=(tileHeight*tileAspectPercent)//100
+    logger.debug(f'tiles will be {tileWidth}x{tileHeight}')
     for i in range(len(names)):
         filepath=sourceNameFolder(names[i],sources[i])
         image=loadPollImage(filepath) #get the image
-        image=makeTile(image) #resize it
+        image=makeTile(image,tileWidth,tileHeight) #resize it
         image=caption(image,f'{names[i]}\n{sources[i]}') #add the name
         image=addBorder(image) #create a border
         images.append(image) #put it in the list
