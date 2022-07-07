@@ -10,6 +10,7 @@ from disnake import ButtonStyle
 from disnake.ui import Button
 from disnake import ButtonStyle
 from headpatExceptions import InsufficientOptionsError
+from injections import WaifuData
 
 logger = logging.getLogger(os.environ['LOGGER_NAME'])
 
@@ -19,9 +20,9 @@ class Waifu():
     """
     A server-side Waifu
     """
-    def __init__(self,name:str,source:str,rating:int):
-        self.name=name
-        self.source=source
+    def __init__(self,waifuData:WaifuData,rating:int):
+        self.name=waifuData.name
+        self.source=waifuData.source
         self.rating=rating
         self._claimer=0
         self._claimedAt=Waifu.DEFAULT_CLAIM_TIME
@@ -124,16 +125,14 @@ class Poll:
 
     def startPoll(self,waifusIn:list[Waifu]):
         selection = Poll.selectPoll(self.size,[option.rating for option in waifusIn])
-        names=list[str]()
-        sources=list[str]()
+        waifusOut=list[WaifuData]()
         for index in selection:
             choice = waifusIn[index]
-            names.append(choice.name)
-            sources.append(choice.source)
+            waifusOut.append(WaifuData(choice.name,choice.source))
             self.ratings.append(choice.rating)
             self.waifus.append(choice)
         self.open=True #only now do we mark open
-        return (names,sources)
+        return (waifusOut)
         
     def endPoll(self): #TODO: maybe take in an inter from commandclose, but if none, do autoclose stuff?
         #TODO: Figure out how to get the original message, and edit it. get_message returned none, and no equivalent fetch seems to exist.
@@ -173,10 +172,10 @@ class Poll:
     def countVotes(self):
         return len(self.users)
 
-    def createPollButtons(self,pollInd:int,names:list[str],sources:list[str]):
+    def createPollButtons(self,pollInd:int,waifus:list[WaifuData]):
         buttons:list[Button]=[None]*(self.size+1)
         for i in range(self.size):
-            buttons[i] = Button(style=ButtonStyle.blurple,label=f'{names[i]}|{sources[i]}',custom_id=f'poll|{self.messageId}|{pollInd}|{i}')
+            buttons[i] = Button(style=ButtonStyle.blurple,label=f'{waifus[i]}',custom_id=f'poll|{self.messageId}|{pollInd}|{i}')
         buttons[-1]=Button(style=ButtonStyle.green,label='Confirm',custom_id=f'poll|{self.messageId}|{pollInd}|Confirm')
         return buttons
 

@@ -69,17 +69,17 @@ class PollCog(commands.Cog):
         # to run a poll:
         # 1 select options
         try:
-            (names, sources) = newPoll.startPoll(pollGuild.waifus)
+            pollWaifus = newPoll.startPoll(pollGuild.waifus)
         except InsufficientOptionsError:
             await self.bot.respond(inter,'WAIFU.POLL.INSUFFICIENT',ephemeral=True)
             pollGuild.removePoll(newPoll)
             return
         # 2 create image
-        image = images.createPollImage(names,sources,pollGuild.getOption(ServerOption.PollWaifuImageSizePixels),pollGuild.getOption(ServerOption.PollWaifuImageAspect))
+        image = images.createPollImage(pollWaifus,pollGuild.getOption(ServerOption.PollWaifuImageSizePixels),pollGuild.getOption(ServerOption.PollWaifuImageAspect))
         imageBytes=images.imageToBytes(image)
         attachment = File(imageBytes, filename = 'poll.png')
         # 3 create vote buttons
-        buttons=newPoll.createPollButtons(pollInd,names,sources)
+        buttons=newPoll.createPollButtons(pollInd,pollWaifus)
         # 4 post image and buttons
         await self.bot.respond(inter,'WAIFU.POLL.OPEN',pollInd,file=attachment,components=buttons)
         # 6 poll end

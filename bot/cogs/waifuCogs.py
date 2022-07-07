@@ -2,6 +2,7 @@
 import os, logging
 import glob, io
 from aiohttp import ClientSession
+from bot.images import waifuFolder
 #local imports
 from headpatExceptions import *
 from injections import WaifuData, folderWaifu, nameSourceWaifu, gachaWaifu
@@ -26,34 +27,34 @@ class WaifuCog(commands.Cog):
         #await button_inter.response.defer()
         imageHash = int(data[1])
         if data[2] == 'accept':
-            (imageArray,name,source) = await database.removeApproval(imageHash) #we've interacted. remove the approval, and get the data
-            self.logger.debug(f'approving {name}|{source}')
-            existingWaifu = images.saveRawPollImage(imageArray,imageHash,images.sourceNameFolder(name,source)) #throw into the filesystem
-            await database.storeWaifu(name,source,imageArray,imageHash) #and into the database
+            (imageArray,waifuData) = await database.removeApproval(imageHash) #we've interacted. remove the approval, and get the data
+            self.logger.debug(f'approving {waifuData}')
+            existingWaifu = images.saveRawPollImage(imageArray,imageHash,waifuData) #throw into the filesystem
+            await database.storeWaifu(waifuData,imageArray,imageHash) #and into the database
             async with ClientSession() as session:
                 announceHook = Webhook.from_url(os.environ['ANNOUNCE_HOOK'],session=session,bot_token=os.environ['DISCORD_TOKEN'])
                 imageBytes = images.arrayToBytes(imageArray) #get image as bytes
                 imageBytes.seek(0)
-                attachment=File(imageBytes,filename=f'approved|{name}|{source}.png')
+                attachment=File(imageBytes,filename=f'approved|{waifuData}.png')
                 if existingWaifu:
-                    await self.bot.respond(announceHook,'WAIFU.ADD.ANNOUNCE.EXISTING',name,source,file = attachment)
+                    await self.bot.respond(announceHook,'WAIFU.ADD.ANNOUNCE.EXISTING',waifuData.name,waifuData.source,file = attachment)
                 else:
-                    await self.bot.respond(announceHook,'WAIFU.ADD.ANNOUNCE.NEW',name,source,file = attachment)
-            await self.bot.respond(button_inter,'WAIFU.ADD.APPROVE',name)
+                    await self.bot.respond(announceHook,'WAIFU.ADD.ANNOUNCE.NEW',waifuData.name,waifuData.source,file = attachment)
+            await self.bot.respond(button_inter,'WAIFU.ADD.APPROVE',waifuData.name)
             #set the buttons to allow removal
             removeButton=Button(label='remove',style=ButtonStyle.red,custom_id=f'approval|{imageHash}|remove')
             await button_inter.message.edit(components=removeButton)
         elif data[2] == 'reject':
-            (*discard,name,source) = await database.removeApproval(imageHash) #we've interacted. remove the approval, and ignore the data
-            self.logger.debug(f'rejecting {name}|{source}')
-            await self.bot.respond(button_inter,'WAIFU.ADD.DENY',name)
+            (*discard,waifuData) = await database.removeApproval(imageHash) #we've interacted. remove the approval, and ignore the data
+            self.logger.debug(f'rejecting {waifuData}')
+            await self.bot.respond(button_inter,'WAIFU.ADD.DENY',waifuData.name)
             #remove the buttons
             await button_inter.edit_original_message(components=None)
         elif data[2] == 'modify':
-            (oldName,oldSource) = await database.getApproval(imageHash)
+            oldWaifu = await database.getApproval(imageHash)
             #create and send an edit modal
-            editName = TextInput(label = "edit waifu name",custom_id=f"editName",value=oldName)
-            editSource = TextInput(label = "edit waifu name",custom_id=f"editSource",value=oldSource)
+            editName = TextInput(label = "edit waifu name",custom_id=f"editName",value=oldWaifu.name)
+            editSource = TextInput(label = "edit waifu name",custom_id=f"editSource",value=oldWaifu.source)
             await button_inter.response.send_modal(
                 title='edit waifu approval',
                 components=[editName,editSource],
@@ -61,23 +62,23 @@ class WaifuCog(commands.Cog):
         elif data[2] == 'remove':
             #remove waifu from:
             #database
-            (name,source) = await database.removeWaifu(imageHash)
-            self.logger.debug(f'removing {name}|{source}')
+            waifuData = await database.removeWaifu(imageHash)
+            self.logger.debug(f'removing {waifuData}')
             # file system
-            waifuGone = images.removePollImage(imageHash,images.sourceNameFolder(name,source))
+            waifuGone = images.removePollImage(imageHash,waifuData)
             if waifuGone:
                 # all servers
                 for guildId in self.bot.servers:
                     try:
-                        self.bot.servers[guildId].removeWaifu(name,source)
+                        self.bot.servers[guildId].removeWaifu(waifuData)
                     except WaifuDNEError:
                         pass
-                await self.bot.respond(button_inter,'WAIFU.ADD.REMOVE.LAST',name)
+                await self.bot.respond(button_inter,'WAIFU.ADD.REMOVE.LAST',waifuData.name)
                 async with ClientSession() as session:
                     announceHook = Webhook.from_url(os.environ['ANNOUNCE_HOOK'],session=session,bot_token=os.environ['DISCORD_TOKEN'])
-                    await self.bot.respond(announceHook,'WAIFU.ADD.ANNOUNCE.REMOVE',name,source)
+                    await self.bot.respond(announceHook,'WAIFU.ADD.ANNOUNCE.REMOVE',waifuData.name,waifuData.source)
             else:
-                await self.bot.respond(button_inter,'WAIFU.ADD.REMOVE.ONE',name)
+                await self.bot.respond(button_inter,'WAIFU.ADD.REMOVE.ONE',waifuData.name)
             #remove the buttons
             await button_inter.edit_original_message(components=None)
 
@@ -125,8 +126,6 @@ class WaifuCog(commands.Cog):
         waifuData:WaifuData = commands.inject(nameSourceWaifu)
     ): #Sends a waifu to the approval channel
         if image.content_type.startswith('image'): #ensure it's actually an image
-            name=waifuData.name
-            source=waifuData.source
             imageHash=hash(image)
             #check to be sure image does not exist
             try:
@@ -148,7 +147,7 @@ class WaifuCog(commands.Cog):
             #send it off the the approval system
             imageBytes=io.BytesIO(await image.read())
             sendAttachment=await image.to_file()
-            await database.addApproval(imageHash,images.bytesToArray(imageBytes),name,source)
+            await database.addApproval(imageHash,images.bytesToArray(imageBytes),waifuData)
             acceptButton=Button(label='accept',style=ButtonStyle.green,custom_id=f'approval|{imageHash}|accept')
             editButton=Button(label='edit',style=ButtonStyle.blurple,custom_id=f'approval|{imageHash}|modify')
             rejectButton=Button(label='reject',style=ButtonStyle.red,custom_id=f'approval|{imageHash}|reject')
@@ -156,7 +155,7 @@ class WaifuCog(commands.Cog):
             announceChannel=self.bot.get_channel(os.environ['APPROVAL_CHANNEL'])
             if announceChannel is None:
                 announceChannel = await self.bot.fetch_channel(os.environ['APPROVAL_CHANNEL'])
-            await self.bot.respond(announceChannel,'WAIFU.ADD.ASK',name,source,
+            await self.bot.respond(announceChannel,'WAIFU.ADD.ASK',waifuData.name,waifuData.source,
                 components=[acceptButton,editButton,rejectButton],
                 file=sendAttachment)
         else:
@@ -171,20 +170,18 @@ class WaifuCog(commands.Cog):
         waifuData:WaifuData = commands.inject(folderWaifu)
     ):
         await inter.response.defer()
-        name=waifuData.name
-        source=waifuData.source
         try:
-            image = images.loadPollImage(images.sourceNameFolder(name,source))
+            image = images.loadPollImage(waifuData)
         except WaifuDNEError:
-            await self.bot.respond(inter,'WAIFU.ERROR.DNE',name,source)
+            await self.bot.respond(inter,'WAIFU.ERROR.DNE',waifuData.name,waifuData.source)
             return
         imageBytes = images.imageToBytes(image)
-        attachment = File(imageBytes, filename = f'{name}.png')
+        attachment = File(imageBytes, filename = f'{waifuData}.png')
         embed=Embed(title=waifuData)
         embed.set_image(file=attachment)
         #check the server to see if we can add extra information
         try:
-            serverSide=self.bot.servers[inter.guild.id].getWaifuByNameSource(name,source)
+            serverSide=self.bot.servers[inter.guild.id].getWaifu(waifuData)
             #waifu exists in server
             #add rating and claim info
             if serverSide.claimer == 0:
@@ -217,8 +214,8 @@ class WaifuCog(commands.Cog):
             if scope == "Global":
                 count=0
                 for waifuStr in glob.glob('*/*/',root_dir=images.POLL_FOLDER):
-                    (source,name,*discard) = waifuStr.split('/')
-                    waifuList.write(f'{name} from {source}\n')
+                    waifuData = folderWaifu(waifuStr)
+                    waifuList.write(f'{waifuData}\n')
                     count+=1
                 reply = self.bot.getResponse('WAIFU.LIST.GLOBAL',count)
             elif scope == 'Local':
@@ -229,9 +226,9 @@ class WaifuCog(commands.Cog):
             else:
                 count=0
                 for waifuStr in glob.glob('*/*/',root_dir=images.POLL_FOLDER):
-                    (source,name,*discard) = waifuStr.split('/')
-                    if not self.bot.servers[inter.guild.id].getWaifuByNameSource(name,source):
-                        waifuList.write(f'{name} from {source}\n')
+                    waifuData = folderWaifu(waifuStr)
+                    if not self.bot.servers[inter.guild.id].getWaifu(waifuData):
+                        waifuList.write(f'{waifuData}\n')
                         count+=1
                 reply = self.bot.getResponse('WAIFU.LIST.DIFFERENCE',count)
         with open('Waifus.txt','rb') as waifuList:
@@ -328,7 +325,7 @@ class GachaCog(commands.Cog):
     ):
         server=self.bot.servers[inter.guild.id]
         try:
-            waifu=server.getWaifuByNameSource(waifuData.name,waifuData.source)
+            waifu=server.getWaifu(waifuData)
             if waifu.claimer != inter.author.id:
                 await self.bot.respond(inter,'GACHA.IMPROVE.NOT_OWNER')
                 return

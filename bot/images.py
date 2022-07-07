@@ -4,9 +4,8 @@ import numpy as np
 from numpy.random import default_rng
 import qoi
 from headpatExceptions import WaifuDNEError
+from injections import WaifuData, POLL_FOLDER, HEADPAT_FOLDER
 
-POLL_FOLDER=os.path.join('img','waifu')
-HEADPAT_FOLDER=os.path.join('img','headpat')
 rng = default_rng()
 font = ImageFont.truetype(os.path.join('data','Cotham',"CothamSans.otf"), size=20)
 logger=logging.getLogger(os.environ['LOGGER_NAME'])
@@ -39,8 +38,8 @@ def arrayToBytes(array):
     image=Image.fromarray(array)
     return imageToBytes(image)
 
-def sourceNameFolder(name:str,source:str) -> str:
-    return os.path.join(source.title(),name.title())
+def waifuFolder(waifuData:WaifuData) -> str:
+    return os.path.join(POLL_FOLDER,waifuData.source,waifuData.name)
 
 def saveHeadpatImage(data:io.BytesIO) -> None:
     """
@@ -73,7 +72,7 @@ def loadHeadpatImage() -> Image.Image:
     image = Image.fromarray(imageArray)
     return image
 
-def savePollImage(data:io.BytesIO, filename:str, subfolder:str) -> bool:
+def savePollImage(data:io.BytesIO, filename:str, waifuData:WaifuData) -> bool:
     """
     Saves a waifu image to the filesystem, creating any necessary directories
     
@@ -83,8 +82,8 @@ def savePollImage(data:io.BytesIO, filename:str, subfolder:str) -> bool:
         the image to save
     filename: `str`
         name of the output file
-    subfolder: `str`
-        where to save the file. Reccomended to use `sourceNameFolder()` to generate
+    waifuData: `:class:WaifuData`
+        the waifu to save
 
     Returns
     ---
@@ -94,9 +93,9 @@ def savePollImage(data:io.BytesIO, filename:str, subfolder:str) -> bool:
     """
     image = Image.open(data)
     array = np.array(image)
-    return saveRawPollImage(array,filename,subfolder)
+    return saveRawPollImage(array,filename,waifuData)
 
-def saveRawPollImage(array,filename:str,subfolder:str) -> bool:
+def saveRawPollImage(array,filename:str,waifuData:WaifuData) -> bool:
     """
     Saves a waifu image to the filesystem, creating any necessary directories
     
@@ -106,8 +105,8 @@ def saveRawPollImage(array,filename:str,subfolder:str) -> bool:
         the image to save, as an nxnx3 rgb value array
     filename: `str`
         name of the output file
-    subfolder: `str`
-        where to save the file. Reccomended to use `sourceNameFolder()` to generate
+    waifuData: `:class:WaifuData`
+        the waifu to save
 
     Returns
     ---
@@ -115,9 +114,9 @@ def saveRawPollImage(array,filename:str,subfolder:str) -> bool:
         `True` if the subfolder alread existed  
         `False` if the subfolder did not previously exist
     """
-    logger.debug(f'saving {filename} for {subfolder}')
+    logger.debug(f'saving {filename} for {waifuData}')
     prevExist = True
-    folder=os.path.join(POLL_FOLDER,subfolder)
+    folder=waifuFolder(waifuData)
     if not os.path.exists(folder):
         prevExist=False
         os.makedirs(folder)
@@ -125,7 +124,7 @@ def saveRawPollImage(array,filename:str,subfolder:str) -> bool:
     qoi.write(path,array)
     return prevExist
 
-def removePollImage(filename:str,subfolder:str):
+def removePollImage(filename:str,waifuData:WaifuData):
     """
     removes a waifu image from the filesystem, deleting the whole directory if there are no images left
 
@@ -133,8 +132,8 @@ def removePollImage(filename:str,subfolder:str):
     ---
     filename: `str`
         name of the file to remove
-    subfolder: `str`
-        folder to look in and delete if necessary
+    waifuData: `:class:WaifuData`
+        the waifu to delete the image for, and delete if necessary
     
     Returns
     ---
@@ -142,9 +141,9 @@ def removePollImage(filename:str,subfolder:str):
         `True` if the entire directory was removed  
         `False` otherwise
     """
-    logger.debug(f'removing {filename} for {subfolder}')
+    logger.debug(f'removing {filename} for {waifuData}')
     lastOne=False
-    folder = os.path.join(POLL_FOLDER,subfolder)
+    folder = waifuFolder(waifuData)
     rmFile = os.path.join(folder,f'{filename}.qoi')
     if os.path.exists(rmFile):
         os.remove(rmFile)
@@ -157,22 +156,22 @@ def removePollImage(filename:str,subfolder:str):
         os.removedirs(folder)
     return lastOne
 
-def loadPollImage(subfolder:str) -> Image.Image:
+def loadPollImage(waifuData:WaifuData) -> Image.Image:
     """
     Loads a waifu image from the filesystem, randomly selecting within a defined range
     
     Parameters
     ---
-    subfolder: `str`
-        where the file to load is. Reccomended to use `sourceNameFolder()` to generate
+    waifuData: `:class:WaifuData`
+        the waifu to load
 
     Returns
     ---
     :class:`PIL.Image.Image`
     """
 
-    logger.debug(f'loading {subfolder} poll image')
-    folder = os.path.join(POLL_FOLDER,subfolder)
+    logger.debug(f'loading {waifuData} poll image')
+    folder = waifuFolder(waifuData)
     pattern = os.path.join(folder,'*.qoi')
     matches = glob.glob(pattern)
     if not matches:
@@ -310,32 +309,27 @@ def collage(images:list[Image.Image],width:int=4) -> Image.Image:
         i+=1
     return collage
 
-def createPollImage(names:list[str],sources:list[str],tileHeight:int=500,tileAspectPercent:int=100) -> Image.Image:
+def createPollImage(waifus:list[WaifuData],tileHeight:int=500,tileAspectPercent:int=100) -> Image.Image:
     """
     Creates a postable waifupoll image from the namse and sources of waifus
 
     Parameters
     ---
-    names: list[`str`]
+    waifus: list[`:class:WaifuData`]
         list of all the waifus to include, in order
-    sources: list[`str`]
-        list of the sources for each waifu, in order  
-        `sources[i]` must be the source for `names[i]`
     
     Returns
     ---
     :class:`PIL.Image.Image`
         completed waifu poll image
     """
-    assert(len(names)==len(sources))
     images=list[Image.Image]()
     tileWidth=(tileHeight*tileAspectPercent)//100
     logger.debug(f'tiles will be {tileWidth}x{tileHeight}')
-    for i in range(len(names)):
-        filepath=sourceNameFolder(names[i],sources[i])
-        image=loadPollImage(filepath) #get the image
+    for waifu in waifus:
+        image=loadPollImage(waifu) #get the image
         image=makeTile(image,tileWidth,tileHeight) #resize it
-        image=caption(image,f'{names[i]}\n{sources[i]}') #add the name
+        image=caption(image,f'{waifu.name}\n{waifu.source}') #add the name
         image=addBorder(image) #create a border
         images.append(image) #put it in the list
     return collage(images) #create the poll image
