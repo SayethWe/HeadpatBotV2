@@ -85,7 +85,7 @@ class Waifu():
     def improve(self):
         self._level+=1
 
-class Poll:
+class WaifuPoll:
     """
     A single poll object, that handles creation, voting backend, and end calculation
     """
@@ -123,7 +123,7 @@ class Poll:
         return self.votes
 
     def startPoll(self,waifusIn:list[Waifu]):
-        selection = Poll.selectPoll(self.size,[option.rating for option in waifusIn])
+        selection = WaifuPoll.selectPoll(self.size,[option.rating for option in waifusIn])
         names=list[str]()
         sources=list[str]()
         for index in selection:
@@ -155,11 +155,11 @@ class Poll:
             #update the ratings
             self.waifus[i].updateRating(ratingChanges[i])
             #award vote points to waifu claimer
-            Poll.addTicketsToDict(awardPoints,self.waifus[i].claimer,Poll.VOTING_TICKETS+int(self.votes[i]*np.log(self.waifus[i].level*self.waifu[i].level+1)))
+            WaifuPoll.addTicketsToDict(awardPoints,self.waifus[i].claimer,WaifuPoll.VOTING_TICKETS+int(self.votes[i]*np.log(self.waifus[i].level*self.waifu[i].level+1)))
         #for each user who voted
         for userId in self.users:
             #award participation points
-            Poll.addTicketsToDict(awardPoints,userId,Poll.VOTING_TICKETS)
+            WaifuPoll.addTicketsToDict(awardPoints,userId,WaifuPoll.VOTING_TICKETS)
         self.open=False #after everything is done, close the poll, so if we error, it stays open.
         return awardPoints
 
@@ -182,26 +182,26 @@ class Poll:
 
     def doVote(self,userid:int,voteInd:int):
         if userid in self.users or not self.open: #poll won't take their vote
-            return Poll.BUTTON_RESULTS.CLOSED
+            return WaifuPoll.BUTTON_RESULTS.CLOSED
         elif userid not in self.voters[voteInd]: #user hasn't voted for this - add vote
             self.voters[voteInd].append(userid)
             self.addVote(voteInd)
-            return Poll.BUTTON_RESULTS.VOTE_ADD
+            return WaifuPoll.BUTTON_RESULTS.VOTE_ADD
         else: #user is cancelling a vote
             self.voters[voteInd].remove(userid)
             self.cancelVote(voteInd)
-            return Poll.BUTTON_RESULTS.VOTE_REMOVE
+            return WaifuPoll.BUTTON_RESULTS.VOTE_REMOVE
 
     def doConfirm(self,userid:int):
         if userid in self.users or not self.open:
-            return Poll.BUTTON_RESULTS.CLOSED
+            return WaifuPoll.BUTTON_RESULTS.CLOSED
         #TODO lock vote buttons by user, which cannot be done yet.
         self.confirmVotes(userid)
-        return Poll.BUTTON_RESULTS.CONFIRM
+        return WaifuPoll.BUTTON_RESULTS.CONFIRM
 
     def performancePlot(self,ax:plt.Axes):
-        expectation=Poll.cubicSigmoid(self.ratings)
-        actual=Poll.cubicSigmoid(self.votes)
+        expectation=WaifuPoll.cubicSigmoid(self.ratings)
+        actual=WaifuPoll.cubicSigmoid(self.votes)
         ax.plot(expectation,actual,'kX')
         ax.plot([-1,1],[-1,1],'b:')
         ax.set_xlim([-1,1])
@@ -215,8 +215,8 @@ class Poll:
     def ratingCountour(ax:plt.Axes,fig):
         lin=np.linspace(-1,1,20)
         x,y=np.meshgrid(lin,lin)
-        z=Poll.cubicSigmoid(y-x,Poll.MAX_RATING_CHANGE)
-        levels=np.arange(-Poll.MAX_RATING_CHANGE,Poll.MAX_RATING_CHANGE+1) #define levels for contours
+        z=WaifuPoll.cubicSigmoid(y-x,WaifuPoll.MAX_RATING_CHANGE)
+        levels=np.arange(-WaifuPoll.MAX_RATING_CHANGE,WaifuPoll.MAX_RATING_CHANGE+1) #define levels for contours
         cs=ax.contourf(x,y,z,levels,cmap=plt.get_cmap('RdYlGn')) #create the contours, return the contourset
         #create a colorbar
         div=make_axes_locatable(ax)
@@ -281,26 +281,26 @@ class Poll:
             raise InsufficientOptionsError
 
         selected=np.zeros(pollSize,dtype=np.int64)
-        selected[:na]=Poll.rng.choice(indices,size=na,replace=False)
+        selected[:na]=WaifuPoll.rng.choice(indices,size=na,replace=False)
         indices=np.setdiff1d(indices,selected[:na],assume_unique=True) #remove those uniformly selected from future calculations
         size=len(indices)
         lq=int(0.25*size)
         uq=int(0.75*size)
-        selected[na:na+nh]=Poll.rng.choice(indices[uq:],size=nh,replace=False) #from past the upper quartile
-        selected[na+nh:na+nh+nm]=Poll.rng.choice(indices[lq:uq],size=nm,replace=False) #the interquartile range
-        selected[na+nh+nm:]=Poll.rng.choice(indices[:lq],size=nl,replace=False)#the lowest range
-        Poll.rng.shuffle(selected) #shuffle the result so we don't always get consistent placement of similar options
+        selected[na:na+nh]=WaifuPoll.rng.choice(indices[uq:],size=nh,replace=False) #from past the upper quartile
+        selected[na+nh:na+nh+nm]=WaifuPoll.rng.choice(indices[lq:uq],size=nm,replace=False) #the interquartile range
+        selected[na+nh+nm:]=WaifuPoll.rng.choice(indices[:lq],size=nl,replace=False)#the lowest range
+        WaifuPoll.rng.shuffle(selected) #shuffle the result so we don't always get consistent placement of similar options
         return selected
 
     def ratingChanges(self):
         #if self.open:  #ignore for now, as it causes ratings to stagnate with the "only close when logic is done" methodology
             #votes are volatile. return 0
         #    return np.zeros(shape=self.size)
-        expectation = Poll.cubicSigmoid(self.ratings)
-        actual=Poll.cubicSigmoid(self.votes)
+        expectation = WaifuPoll.cubicSigmoid(self.ratings)
+        actual=WaifuPoll.cubicSigmoid(self.votes)
         diff=actual-expectation
         diff=np.append(diff,[-2,2]) #make sure we have the extreme possible values so we don't get different adjustments
-        changes=Poll.cubicSigmoid(diff,magnitude=Poll.MAX_RATING_CHANGE)
+        changes=WaifuPoll.cubicSigmoid(diff,magnitude=WaifuPoll.MAX_RATING_CHANGE)
         changes=changes[:-2] #remove the extremes we added before
         #return np.around(diff*diff*diff)
         return np.around(changes)

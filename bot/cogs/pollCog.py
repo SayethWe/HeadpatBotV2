@@ -4,7 +4,7 @@ from io import BytesIO
 #local imports
 import images
 from guilds import ServerOption
-from polls import Poll
+from polls import WaifuPoll
 from headpatExceptions import InsufficientOptionsError
 from headpatBot import HeadpatBot
 #library imports
@@ -22,32 +22,32 @@ class PollCog(commands.Cog):
         data = button_inter.component.custom_id.split('|')
         if data[0] != 'poll':
             return
-        poll:Poll = self.bot.servers[int(data[1])].polls[int(data[2])]
+        poll:WaifuPoll = self.bot.servers[int(data[1])].polls[int(data[2])]
         if data[3] == 'Confirm':
             outcome=poll.doConfirm(button_inter.author.id)
         else:
             outcome=poll.doVote(button_inter.author.id,int(data[3]))
         
-        if outcome==Poll.BUTTON_RESULTS.VOTE_ADD:
+        if outcome==WaifuPoll.BUTTON_RESULTS.VOTE_ADD:
             await self.bot.respond(button_inter,'WAIFU.POLL.VOTE.ADD',poll.waifus[int(data[3])].name,ephemeral=True)
-        elif outcome==Poll.BUTTON_RESULTS.VOTE_REMOVE:
+        elif outcome==WaifuPoll.BUTTON_RESULTS.VOTE_REMOVE:
             await self.bot.respond(button_inter,'WAIFU.POLL.VOTE.REMOVE',poll.waifus[int(data[3])].name,ephemeral=True)
-        elif outcome == Poll.BUTTON_RESULTS.CONFIRM:
+        elif outcome == WaifuPoll.BUTTON_RESULTS.CONFIRM:
             await self.bot.respond(button_inter,'WAIFU.POLL.VOTE.CONFIRM',button_inter.author.display_name)
-        elif outcome==Poll.BUTTON_RESULTS.CLOSED:
+        elif outcome==WaifuPoll.BUTTON_RESULTS.CLOSED:
             await self.bot.respond(button_inter,'WAIFU.POLL.VOTE.CLOSED',ephemeral=True)
 
     @commands.slash_command(
     default_member_permissions=Permissions(manage_messages=True),
     dm_permission=False
     )
-    async def poll(
+    async def waifu_poll(
         self,
         inter:ApplicationCommandInteraction
     ):
         pass
 
-    @poll.sub_command(
+    @waifu_poll.sub_command(
         description="Start a Waifu Poll"
     )
     async def start(
@@ -64,7 +64,7 @@ class PollCog(commands.Cog):
                 return
         quickLink = await inter.original_message()
         quickLink = quickLink.jump_url
-        newPoll=Poll(inter.guild.id,pollGuild.getOption(ServerOption.PollWaifuCount),quickLink)
+        newPoll=WaifuPoll(inter.guild.id,pollGuild.getOption(ServerOption.PollWaifuCount),quickLink)
         pollInd=pollGuild.addPoll(newPoll)
         # to run a poll:
         # 1 select options
@@ -91,7 +91,7 @@ class PollCog(commands.Cog):
         #    pollCog = PollCheckCog(delay,delta,end,newPoll,threshold)
         #    pollCog.checkPoll.start()
 
-    @poll.sub_command(
+    @waifu_poll.sub_command(
         description="close a running waifu poll and calculate results"
     )
     async def close(
@@ -116,7 +116,7 @@ class PollCog(commands.Cog):
         else:
             await self.bot.respond(inter,'WAIFU.POLL.NONE',ephemeral=True)
 
-    @poll.sub_command(
+    @waifu_poll.sub_command(
         description="Get results from a poll"
     )
     async def results(
@@ -133,7 +133,7 @@ class PollCog(commands.Cog):
         fig,axs = plt.subplots(2,2,squeeze=False,figsize=(8,8))
         poll.voteHistogram(axs[0,0])
         poll.performancePlot(axs[0,1])
-        Poll.ratingCountour(axs[0,1],fig)
+        WaifuPoll.ratingCountour(axs[0,1],fig)
         pollGuild.ratingsPlot(axs[1,0])
         poll.resultsTable(axs[1,1])
         fig.suptitle("Waifu poll results")

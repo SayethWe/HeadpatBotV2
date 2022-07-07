@@ -3,8 +3,8 @@ from enum import Enum
 import os, logging
 from math import sqrt
 import images
-import pickle
-from polls import Poll, Waifu
+import refactor_pickle as pickle
+from polls import WaifuPoll, Waifu
 from headpatExceptions import *
 import matplotlib.pyplot as plt
 import numpy as np
@@ -48,7 +48,7 @@ class Server:
     def __init__(self,identity):
         self.identity = identity
         self.waifus=list[Waifu]()
-        self.polls=list[Poll]()
+        self.polls=list[WaifuPoll]()
         self.options=ServerOption.defaultOptions
         self.tickets=dict[int,int]()
 
@@ -132,11 +132,11 @@ class Server:
     def __repr__(self):
         return f'name:{self.__class__.__name__},guildId={self.identity}\n{len(self.waifus)} waifus={self.waifus}\n{len(self.polls)} polls={self.polls}\noptions={self.options}'
 
-    def addPoll(self,poll:Poll):
+    def addPoll(self,poll:WaifuPoll):
         self.polls.append(poll)
         return len(self.polls)-1
 
-    def removePoll(self,poll:Poll):
+    def removePoll(self,poll:WaifuPoll):
         self.polls.remove(poll)
     
     def ensureTickets(self,user:int):

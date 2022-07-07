@@ -2,7 +2,8 @@ from pydoc import doc
 from guilds import Server
 import asyncpg as db
 import qoi
-import os, pickle, asyncio
+import os, asyncio
+import refactor_pickle as pickle
 
 IGNORE_DATABASE_ENVVAR='NO_DATABASE'
 link = os.environ['DATABASE_URL']
