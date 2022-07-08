@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 import logging, os
 from enum import Enum
 from datetime import datetime, timezone
@@ -5,7 +6,7 @@ import numpy as np
 import matplotlib.pyplot  as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from numpy.random import default_rng
-from disnake.ui import Button, View
+from disnake.ui import Button, View, ActionRow
 from disnake import ButtonStyle
 from disnake.ui import Button
 from disnake import ButtonStyle
@@ -85,6 +86,13 @@ class Waifu():
     def improve(self):
         self._level+=1
 
+class PollType(Enum):
+    Single_Vote='fptp'
+    Ranked_Single='irv'
+    Ranked_Multiple='borda'
+    Score='score'
+    Approval='approval'
+
 class WaifuPoll:
     """
     A single poll object, that handles creation, voting backend, and end calculation
@@ -143,7 +151,7 @@ class WaifuPoll:
             # no one participated
             self.open=False
             logger.debug('Unparticipated poll')
-            return {}
+            return {0:0}
         ratingChanges = self.ratingChanges() #determine how much the ratings change
         awardPoints=dict[int,int]()
         #for each waifu in the poll
@@ -155,7 +163,7 @@ class WaifuPoll:
             #update the ratings
             self.waifus[i].updateRating(ratingChanges[i])
             #award vote points to waifu claimer
-            WaifuPoll.addTicketsToDict(awardPoints,self.waifus[i].claimer,WaifuPoll.VOTING_TICKETS+int(self.votes[i]*np.log(self.waifus[i].level*self.waifu[i].level+1)))
+            WaifuPoll.addTicketsToDict(awardPoints,self.waifus[i].claimer,WaifuPoll.VOTING_TICKETS+int(self.votes[i]*np.log(self.waifus[i].level*self.waifus[i].level+1)))
         #for each user who voted
         for userId in self.users:
             #award participation points
@@ -342,3 +350,110 @@ class WaifuPoll:
 
     def __repr__(self) -> str:
         return f'Poll with{vars(self)}'
+
+class UserPoll(ABC):
+    def __init__(self,host:int,question:str):
+        self.host=host
+        self.question=question
+        self.confirmed=set[int]()
+
+    @staticmethod
+    def createPoll(self,host:int,question:str,type:PollType):
+        if type == PollType.Single_Vote:
+            return FPTPPoll(host,question)
+        if type == PollType.Ranked_Single:
+            return None
+        if type == PollType.Ranked_Multiple:
+            return None
+        if type == PollType.Score:
+            return None
+        if type == PollType.Approval:
+            return ApprovalPoll(host,question)
+
+    class BUTTON_RESULTS(Enum):
+        pass
+
+    @abstractmethod
+    def createView(self):
+        pass
+            
+    @abstractmethod
+    def doVote(self,userId:int,i:int,j:int):
+        if userId in self.confirmed:
+            return
+
+    def doConfirm(self,userId:int):
+        self.confirmed.add(userId)
+
+    @abstractmethod
+    def endPoll(self):
+        pass
+
+    def addOption(self,option:str):
+        self.options.append(option.strip().title())
+
+class FPTPPoll(UserPoll):
+    def __init__(self,host:int,options:list[str]):
+        self.votes=dict[int,int]() #user->vote
+        super.__init__(host,options)
+
+    def createView(self):
+        view=View()
+        for i in range(len(self.options)):
+            text=self.options[i]
+            id=f'userPoll|{self.host}|{i}|0'
+            button=Button(label=text,custom_id=id)
+            view.add_item(button)
+            return view
+
+    def doVote(self,userId:int,i:int,j:int):
+        self.votes[userId]=i
+
+    def endPoll(self):
+        for userId in self.votes:
+            self.results[self.votes[userId]] +=1
+        
+
+class ApprovalPoll(UserPoll):
+    def __init__(self,host:int,options:list[str]):
+        self.votes=[list[int]() for _ in range(len(options))] #option -> list of users
+        super().__init__(host,options)
+    
+    def createView(self):
+            view=View()
+            for i in range(len(self.options)):
+                text=self.options[i]
+                id=f'userPoll|{self.host}|{i}|0'
+                button=Button(label=text,custom_id=id)
+                view.add_item(button)
+                return view
+
+    #doConfirm
+    #score
+
+    def doVote(self,userId:int,i:int,j:int):
+        if userId in self.votes[i]:
+            self.votes[i].remove(userId)
+        else:
+            self.votes[i].append(userId)
+
+    def endPoll(self):
+        for i in range(len(self.options)):
+            self.results[i]+=len(self.votes[i])
+
+UserPoll.register(FPTPPoll)
+UserPoll.register(ApprovalPoll)
+#createView:
+#PollType.Ranked_Single or PollType.Ranked_Multiple:
+    #need as many buttons per option as there are options
+#    for j in range(5):
+#        id=f'userPoll|{self.host}|{i}|{j}'
+#        text=f'rank {options[i]} to {j+1}'
+#        row.add_button()
+#        pass
+#PollType.Score:
+    #need score 1->5 for each option
+#    for j in range(5):
+#        id=f'userPoll|{self.host}|{i}|{j}'
+#        text=f'score {options[i]} as {j+1}/5'
+#        pass

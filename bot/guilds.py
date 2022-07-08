@@ -4,7 +4,7 @@ import os, logging
 from math import sqrt
 import images
 import refactor_pickle as pickle
-from polls import WaifuPoll, Waifu
+from polls import WaifuPoll, Waifu, UserPoll
 from headpatExceptions import *
 import matplotlib.pyplot as plt
 import numpy as np
@@ -51,6 +51,15 @@ class Server:
         self.polls=list[WaifuPoll]()
         self.options=ServerOption.defaultOptions
         self.tickets=dict[int,int]()
+        self._userPolls=dict[int,UserPoll]()
+
+    @property
+    def userPolls(self):
+        try:
+            return self._userPolls
+        except AttributeError:
+            self._userPolls=dict[int,UserPoll]()
+        return self._userPolls
 
     class ServerOption(Enum):
         #need to stick around for backward compatibility. Figure out how to get rid of these in stored guilds. all unused except when unpickling

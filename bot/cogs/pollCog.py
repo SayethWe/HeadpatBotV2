@@ -4,11 +4,11 @@ from io import BytesIO
 #local imports
 import images
 from guilds import ServerOption
-from polls import WaifuPoll
+from polls import WaifuPoll, PollType, UserPoll
 from headpatExceptions import InsufficientOptionsError
 from headpatBot import HeadpatBot
 #library imports
-from disnake import ApplicationCommandInteraction, File, MessageInteraction, Permissions
+from disnake import ApplicationCommandInteraction, File, MessageInteraction, Permissions, User
 from disnake.ext import commands
 import matplotlib.pyplot as plt
 
@@ -36,6 +36,12 @@ class PollCog(commands.Cog):
             await self.bot.respond(button_inter,'WAIFU.POLL.VOTE.CONFIRM',button_inter.author.display_name)
         elif outcome==WaifuPoll.BUTTON_RESULTS.CLOSED:
             await self.bot.respond(button_inter,'WAIFU.POLL.VOTE.CLOSED',ephemeral=True)
+
+    @commands.Cog.listener(name="on_button_click")
+    async def userPollVoteHandler(self,button_inter:MessageInteraction):
+        data = button_inter.component.custom_id.split('|') #('userPoll'|hostId|optionNum|rankNum)
+        if data[0] != 'userPoll':
+            return
 
     @commands.slash_command(
     default_member_permissions=Permissions(manage_messages=True),
@@ -162,3 +168,73 @@ class PollCog(commands.Cog):
         except AttributeError:
             await self.bot.respond(inter,'WAIFU.POLL.JUMP.OLD',ephemeral=True)
         
+    @commands.slash_command()
+    async def user_poll(
+        self,
+        inter:ApplicationCommandInteraction
+    ):
+        pass
+
+    @user_poll.sub_command(
+        description="ask guild members a question"
+    )
+    async def create(
+        self,
+        inter:ApplicationCommandInteraction,
+        question:str=commands.Param(description='question to ask'),
+        type:PollType=PollType.Single_Vote
+    ):
+        #make sure user only does one poll
+        if inter.author.id in self.bot.servers[inter.guild.id].userPolls:
+            await inter.send('duplicate poll')
+            return
+        poll=UserPoll.createPoll(inter.author.id,question,type)
+        if poll is None:
+            await inter.send('poll type not supported')
+            return
+        await inter.send('add options',ephemeral=True)
+
+    @user_poll.sub_command(
+        description="add option to user poll"
+    )
+    async def add_option(
+        self,
+        inter:ApplicationCommandInteraction,
+        option:str=commands.Param(description="option to add")
+    ):
+        try:
+            poll = self.bot.servers[inter.guild.id].userPolls[inter.author.id]
+        except KeyError:
+            await inter.send('no poll',ephemeral=True)
+            return
+        try:
+            poll.addOption(option)
+        except: #TODO: error type for too many options
+            await inter.send('too many options',ephemeral=True)
+            return
+        await inter.send('option added',ephemeral=True)
+
+    @user_poll.sub_command(
+        description = "preview created poll"
+    )
+    async def preview(
+        self,
+        inter:ApplicationCommandInteraction
+    ):
+        await inter.send('preview')
+
+    @user_poll.sub_command(
+        description="start created poll"
+    )
+    async def start(
+        self,
+        inter:ApplicationCommandInteraction
+    ):
+        await inter.send('poll start')
+
+    @user_poll.sub_command()
+    async def close(
+        self,
+        inter:ApplicationCommandInteraction
+    ):
+        await inter.send('poll close')
