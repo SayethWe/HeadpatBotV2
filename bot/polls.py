@@ -80,7 +80,7 @@ class Waifu():
         self._claimer=0
         self._claimedAt=Waifu.DEFAULT_CLAIM_TIME
         self._level=0
-        self.rating -= 1
+        #self.updateRating(-1)
 
     def improve(self):
         self._level+=1
