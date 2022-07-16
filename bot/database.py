@@ -54,7 +54,7 @@ async def storeGuildPickle(guild:Server):
     ON CONFLICT (id) DO UPDATE
     SET data = excluded.data
     """
-    pickle_bytes = pickle.dumps(guild)
+    pickle_bytes = guild.asBytes
     await doCommand(cmdString,guild.identity,pickle_bytes)
 
 async def removeGuild(guildId:int):

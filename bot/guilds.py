@@ -99,7 +99,17 @@ class Server:
     def save(self):
         filePath=os.path.join(SAVE_FOLDER,f'{self.identity}.p')
         with open(filePath,'wb') as saveFile:
-            pickle.dump(self,saveFile)
+            try:
+                pickle.dump(self,saveFile)
+            except Exception as err:
+                self.logger.error(f'failed to pickle {self} with {err}')
+
+    @property
+    def asBytes(self):
+        try:
+            return pickle.dumps(self)
+        except Exception as err:
+            self.logger.error(f'failed to pickle {self} with {err}')
 
     def delete(self):
         filePath=os.path.join(SAVE_FOLDER,f'{self.identity}.p')
