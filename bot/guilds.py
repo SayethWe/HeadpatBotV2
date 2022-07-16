@@ -21,7 +21,7 @@ class ServerOption(Enum):
         GachaMaxWaifus=('gacha collection max count',8,0,25)
         GachaExpiryHours=('gacha collection expiration hours',150,5,10000)
 
-        @property
+        @staticmethod
         def defaultOptions() -> dict[str,int]:
             options=dict[str,int]()
             for option in ServerOption:
@@ -49,7 +49,7 @@ class Server:
         self.identity = identity
         self.waifus=list[Waifu]()
         self.polls=list[Poll]()
-        self.options=ServerOption.defaultOptions
+        self.options=ServerOption.defaultOptions()
         self.tickets=dict[int,int]()
 
     class ServerOption(Enum):
@@ -102,14 +102,14 @@ class Server:
             try:
                 pickle.dump(self,saveFile)
             except Exception as err:
-                self.logger.error(f'failed to pickle {self} with {err}')
+                logger.error(f'failed to pickle {self} with {err}')
 
     @property
     def asBytes(self):
         try:
             return pickle.dumps(self)
         except Exception as err:
-            self.logger.error(f'failed to pickle {self} with {err}')
+            logger.error(f'failed to pickle {self} with {err}')
 
     def delete(self):
         filePath=os.path.join(SAVE_FOLDER,f'{self.identity}.p')

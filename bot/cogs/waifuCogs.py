@@ -341,6 +341,6 @@ class GachaCog(commands.Cog):
                 await self.bot.respond(inter,'GACHA.IMPROVE.TOO_EXPENSIVE',cost)
                 return
         except WaifuDNEError:
-            await self.bot.respond(inter,'WAIFU.ERROR.NOT_IN_SERVER')
+            await self.bot.respond(inter,'WAIFU.ERROR.NOT_IN_SERVER', waifuData)
             return
         
