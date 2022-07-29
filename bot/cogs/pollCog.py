@@ -3,9 +3,8 @@ import logging, os
 from io import BytesIO
 #local imports
 import images
-from guilds import ServerOption
 from polls import Poll
-from headpatExceptions import InsufficientOptionsError
+from headpatExceptions import InsufficientOptionsError, InvalidPollStateError
 from headpatBot import HeadpatBot
 #library imports
 from disnake import ApplicationCommandInteraction, File, MessageInteraction, Permissions
@@ -56,31 +55,19 @@ class PollCog(commands.Cog):
         #autoClose:bool = commands.param(True,description="Whether to close this poll automatically based on Server options")
     ):
         await inter.response.defer()
-        pollGuild = self.bot.servers[inter.guild.id]
-        if len(pollGuild.polls)!=0: #other polls have run
-            if pollGuild.polls[-1].open: #another poll is running
-                #TODO: include link to message
-                await self.bot.respond(inter,'WAIFU.POLL.EXISTS',ephemeral=True)
-                return
         quickLink = await inter.original_message()
         quickLink = quickLink.jump_url
-        newPoll=Poll(inter.guild.id,pollGuild.getOption(ServerOption.PollWaifuCount),quickLink)
-        pollInd=pollGuild.addPoll(newPoll)
-        # to run a poll:
-        # 1 select options
+        pollGuild = self.bot.servers[inter.guild.id]
         try:
-            (names, sources) = newPoll.startPoll(pollGuild.waifus)
+            (pollInd,imageBytes,buttons)=pollGuild.addPoll(quickLink)
         except InsufficientOptionsError:
             await self.bot.respond(inter,'WAIFU.POLL.INSUFFICIENT',ephemeral=True)
-            pollGuild.removePoll(newPoll)
             return
-        # 2 create image
-        image = images.createPollImage(names,sources,pollGuild.getOption(ServerOption.PollWaifuImageSizePixels),pollGuild.getOption(ServerOption.PollWaifuImageAspect))
-        imageBytes=images.imageToBytes(image)
+        except InvalidPollStateError:
+            await self.bot.respond(inter,'WAIFU.POLL.EXISTS',ephemeral=True)
+            return
         attachment = File(imageBytes, filename = 'poll.png')
-        # 3 create vote buttons
-        buttons=newPoll.createPollButtons(pollInd,names,sources)
-        # 4 post image and buttons
+        # post image and buttons
         await self.bot.respond(inter,'WAIFU.POLL.OPEN',pollInd,file=attachment,components=buttons)
         # 6 poll end
         #if (autoClose):
@@ -100,21 +87,14 @@ class PollCog(commands.Cog):
     ):
         await inter.response.defer()
         pollGuild = self.bot.servers[inter.guild.id] 
-        if len(pollGuild.polls)!=0: #other polls have run
-            poll = pollGuild.polls[-1]
-        else:
+        try:
+            pollGuild.endPoll()
+        except InvalidPollStateError:
             await self.bot.respond(inter,'WAIFU.POLL.NONE',ephemeral=True)
             return
-        if(poll.open):
-            pollPoints=poll.endPoll()
-            #award points
-            for userId in pollPoints:
-                pollGuild.modifyTickets(userId,pollPoints[userId])
-            #create images
-            await self.bot.respond(inter,'WAIFU.POLL.CLOSE')
-            await self.results(inter,-1)
-        else:
-            await self.bot.respond(inter,'WAIFU.POLL.NONE',ephemeral=True)
+        #create images
+        await self.bot.respond(inter,'WAIFU.POLL.CLOSE')
+        await self.results(inter,-1)
 
     @poll.sub_command(
         description="Get results from a poll"

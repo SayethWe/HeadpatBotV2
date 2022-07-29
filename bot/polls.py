@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 import logging, os
 from enum import Enum
 from datetime import datetime, timezone
@@ -143,8 +144,8 @@ class Poll:
             # no one participated
             self.open=False
             logger.debug('Unparticipated poll')
-            return {}
-        ratingChanges = self.ratingChanges() #determine how much the ratings change
+            return PollResults({},{})
+        ratingUpdates=dict[tuple[str,str],int]()
         awardPoints=dict[int,int]()
         #for each waifu in the poll
         for i in range(self.size):
@@ -152,16 +153,17 @@ class Poll:
             self.voters[i]=set(self.users).intersection(self.voters[i])
             #set total votes to be the length
             self.votes[i]=len(self.voters[i])
-            #update the ratings
-            self.waifus[i].updateRating(ratingChanges[i])
             #award vote points to waifu claimer
             Poll.addTicketsToDict(awardPoints,self.waifus[i].claimer,Poll.VOTING_TICKETS+int(self.votes[i]*np.log(self.waifus[i].level*self.waifus[i].level+1)))
         #for each user who voted
         for userId in self.users:
             #award participation points
             Poll.addTicketsToDict(awardPoints,userId,Poll.VOTING_TICKETS)
+        ratingDelta = self.ratingChanges() #determine how much the ratings change, after all non-confirmed votes are removed
+        for i in range(self.size):
+            ratingUpdates[(self.waifus[i].name,self.waifus[i].source)]=ratingDelta[i]
         self.open=False #after everything is done, close the poll, so if we error, it stays open.
-        return awardPoints
+        return PollResults(awardPoints,ratingUpdates)
 
     @staticmethod
     def addTicketsToDict(ticketsDict:dict[int,int],key:int,amt:int):
@@ -173,10 +175,10 @@ class Poll:
     def countVotes(self):
         return len(self.users)
 
-    def createPollButtons(self,pollInd:int,names:list[str],sources:list[str]):
+    def createPollButtons(self,pollInd:int):
         buttons:list[Button]=[None]*(self.size+1)
         for i in range(self.size):
-            buttons[i] = Button(style=ButtonStyle.blurple,label=f'{names[i]}|{sources[i]}',custom_id=f'poll|{self.messageId}|{pollInd}|{i}')
+            buttons[i] = Button(style=ButtonStyle.blurple,label=f'{self.waifus[i].name}|{self.waifus[i].source}',custom_id=f'poll|{self.messageId}|{pollInd}|{i}')
         buttons[-1]=Button(style=ButtonStyle.green,label='Confirm',custom_id=f'poll|{self.messageId}|{pollInd}|Confirm')
         return buttons
 
@@ -342,3 +344,8 @@ class Poll:
 
     def __repr__(self) -> str:
         return f'Poll with{vars(self)}'
+
+@dataclass
+class PollResults:
+    awardTickets:dict[int,int]
+    ratingChanges:dict[tuple[str,str],int]

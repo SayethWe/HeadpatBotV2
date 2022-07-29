@@ -142,9 +142,37 @@ class Server:
     def __repr__(self):
         return f'name:{self.__class__.__name__},guildId={self.identity}\n{len(self.waifus)} waifus={self.waifus}\n{len(self.polls)} polls={self.polls}\noptions={self.options}'
 
-    def addPoll(self,poll:Poll):
-        self.polls.append(poll)
-        return len(self.polls)-1
+    def addPoll(self,quickLink:str):
+        """"
+            creates a new poll and starts it, returning the image and view
+        """
+        if len(self.polls)!=0: #other polls have run
+            if self.polls[-1].open: #another poll is running
+                raise InvalidPollStateError
+        newPoll=Poll(self.identity,self.getOption(ServerOption.PollWaifuCount),quickLink)
+        #select options
+        (names, sources) = newPoll.startPoll(self.waifus)
+        #create image
+        image = images.createPollImage(names,sources,self.getOption(ServerOption.PollWaifuImageSizePixels),self.getOption(ServerOption.PollWaifuImageAspect))
+        imageBytes=images.imageToBytes(image)
+        #create vote buttons
+        buttons=newPoll.createPollButtons(len(self.polls))
+        self.polls.append(newPoll)
+        return (len(self.polls)-1,imageBytes,buttons)
+
+    def endPoll(self):
+        if len(self.polls) == 0: #ensure polls have run
+            raise InvalidPollStateError
+        poll=self.polls[-1]
+        if not poll.open: #and that the latest one is open
+            raise InvalidPollStateError
+        pollResults=poll.endPoll()
+        #award points
+        for userId in pollResults.awardTickets:
+            self.modifyTickets(userId,pollResults.awardTickets[userId])
+        #change ratings
+        for (name,source) in pollResults.ratingChanges:
+            self.getWaifuByNameSource(name,source).updateRating(pollResults.ratingChanges[(name,source)])
 
     def removePoll(self,poll:Poll):
         self.polls.remove(poll)
