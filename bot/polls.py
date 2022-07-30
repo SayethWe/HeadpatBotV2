@@ -107,7 +107,7 @@ class Poll:
         self.users=list[int]()
         self.waifus=list[Waifu]()
         self.ratings=list[int]()
-        self.votes=np.zeros(shape=size,dtype=np.int64)
+        self.votes=[0]*size
         self.voters=[list[int]() for _ in range(size)]
         self.size = size
         
@@ -145,23 +145,18 @@ class Poll:
             self.open=False
             logger.debug('Unparticipated poll')
             return PollResults({},{})
+        ratingDelta = self.ratingChanges()
         ratingUpdates=dict[tuple[str,str],int]()
         awardPoints=dict[int,int]()
         #for each waifu in the poll
         for i in range(self.size):
-            #remove any users who didn't confirm
-            self.voters[i]=set(self.users).intersection(self.voters[i])
-            #set total votes to be the length
-            self.votes[i]=len(self.voters[i])
+            ratingUpdates[(self.waifus[i].name,self.waifus[i].source)]=ratingDelta[i]
             #award vote points to waifu claimer
             Poll.addTicketsToDict(awardPoints,self.waifus[i].claimer,Poll.VOTING_TICKETS+int(self.votes[i]*np.log(self.waifus[i].level*self.waifus[i].level+1)))
         #for each user who voted
         for userId in self.users:
             #award participation points
             Poll.addTicketsToDict(awardPoints,userId,Poll.VOTING_TICKETS)
-        ratingDelta = self.ratingChanges() #determine how much the ratings change, after all non-confirmed votes are removed
-        for i in range(self.size):
-            ratingUpdates[(self.waifus[i].name,self.waifus[i].source)]=ratingDelta[i]
         self.open=False #after everything is done, close the poll, so if we error, it stays open.
         return PollResults(awardPoints,ratingUpdates)
 
@@ -187,18 +182,23 @@ class Poll:
             return Poll.BUTTON_RESULTS.CLOSED
         elif userid not in self.voters[voteInd]: #user hasn't voted for this - add vote
             self.voters[voteInd].append(userid)
-            self.addVote(voteInd)
+            #self.addVote(voteInd)
             return Poll.BUTTON_RESULTS.VOTE_ADD
         else: #user is cancelling a vote
             self.voters[voteInd].remove(userid)
-            self.cancelVote(voteInd)
+            #self.cancelVote(voteInd)
             return Poll.BUTTON_RESULTS.VOTE_REMOVE
 
     def doConfirm(self,userid:int):
         if userid in self.users or not self.open:
             return Poll.BUTTON_RESULTS.CLOSED
         #TODO lock vote buttons by user, which cannot be done yet.
-        self.confirmVotes(userid)
+        #self.confirmVotes(userid)
+        self.users.append(userid)
+        for i in range(self.size):
+            if userid in self.voters[i]:
+                self.voters[i].remove(userid) #clear user out of votes because we no longer need to track that
+                self.votes[i] += 1 #store the vote anonymously
         return Poll.BUTTON_RESULTS.CONFIRM
 
     def performancePlot(self,ax:plt.Axes):
