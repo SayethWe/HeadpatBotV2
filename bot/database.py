@@ -52,7 +52,9 @@ async def getGuild(guildId:int) -> Server:
         return Server.buildFromDict(yaml.safe_load(stored_server.get('yaml')))
     except Exception as err:
         logger.warning(f'error trying to load {guildId} from yaml',stack_info=True,exc_info=err)
-        return pickle.loads(stored_server.get('data'))
+        server=pickle.loads(stored_server.get('data'))
+        await storeGuild(server)
+        return server
 
 async def storeGuild(guild:Server):
     cmdString = """INSERT INTO guilds (id, data, yaml) VALUES ($1 ,$2, $3)

@@ -139,6 +139,9 @@ class Server:
                 yaml.safe_dump(self.getStorageDict(),saveFile)
             except Exception as err:
                 logger.error(f'failed to yaml dump {self} with {err}')
+                newServer=Server(self.identity)
+                yaml.safe_dump(newServer.getStorageDict(),saveFile)
+
 
     @property
     def asBytes(self):
