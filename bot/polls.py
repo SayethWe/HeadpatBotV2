@@ -145,7 +145,10 @@ class Poll:
         store['open']=self.open
         store['waifus'] = [[waifu.name,waifu.source] for waifu in self.waifus]
         #need to convert because votes may be np arrays in older versions, or ratings np floats which don't store right with yaml
-        store['ratings']=[int(rating) for rating in self.ratings]
+        try:
+            store['ratings']=[int(rating) for rating in self.ratings]
+        except AttributeError:
+            store['ratings']=[0]*self.size
         store['votes']=[int(vote) for vote in self.votes]
         if self.open:
             #need to store vote and user specifics

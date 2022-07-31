@@ -59,7 +59,10 @@ class Server:
         store["waifus"]=[waifu.getStorageDict() for waifu in self.waifus]
         store["polls"] =[poll.getStorageDict() for poll in self.polls]
         store["options"]=self.options
-        store["tickets"]=self.tickets
+        try:
+            store["tickets"]=self.tickets
+        except AttributeError:
+            store["tickets"]=dict[int,int]()
         return store
 
     @staticmethod
