@@ -11,6 +11,7 @@ from disnake import ButtonStyle
 from disnake.ui import Button
 from disnake import ButtonStyle
 from headpatExceptions import InsufficientOptionsError
+from injections import WaifuData
 
 logger = logging.getLogger(os.environ['LOGGER_NAME'])
 
@@ -105,8 +106,10 @@ class Poll:
         self.open = False
         self.quickLink = quickLink
         self.users=list[int]()
-        self.waifus=list[Waifu]()
+        self.waifus=list[WaifuData]()
         self.ratings=list[int]()
+        self._claimers=list[int]()
+        self._levels=list[int]()
         self.votes=[0]*size
         self.voters=[list[int]() for _ in range(size)]
         self.size = size
@@ -132,7 +135,9 @@ class Poll:
             names.append(choice.name)
             sources.append(choice.source)
             self.ratings.append(choice.rating)
-            self.waifus.append(choice)
+            self._claimers.append(choice.claimer)
+            self._levels.append(choice.level)
+            self.waifus.append(WaifuData(choice.name,choice.source))
         self.open=True #only now do we mark open
         return (names,sources)
         
@@ -152,7 +157,7 @@ class Poll:
         for i in range(self.size):
             ratingUpdates[(self.waifus[i].name,self.waifus[i].source)]=ratingDelta[i]
             #award vote points to waifu claimer
-            Poll.addTicketsToDict(awardPoints,self.waifus[i].claimer,Poll.VOTING_TICKETS+int(self.votes[i]*np.log(self.waifus[i].level*self.waifus[i].level+1)))
+            Poll.addTicketsToDict(awardPoints,self.claimers[i],Poll.VOTING_TICKETS+int(self.votes[i]*np.log(self.levels[i]*self.levels[i]+1)))
         #for each user who voted
         for userId in self.users:
             #award participation points
@@ -344,6 +349,20 @@ class Poll:
 
     def __repr__(self) -> str:
         return f'Poll with{vars(self)}'
+    
+    @property
+    def claimers(self):
+        try:
+            return self._claimers
+        except AttributeError:
+            return [waifu.claimer for waifu in self.waifus]
+
+    @property
+    def levels(self):
+        try:
+            return self._levels
+        except AttributeError:
+            return [waifu.level for waifu in self.waifus]
 
 @dataclass
 class PollResults:
