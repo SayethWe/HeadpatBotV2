@@ -138,7 +138,10 @@ class Poll:
         store={}
         store['guildId']=self.messageId
         store['size']=self.size
-        store['link']=self.quickLink
+        try:
+            store['link']=self.quickLink
+        except AttributeError:
+            store['link']=None
         store['open']=self.open
         store['waifus'] = [[waifu.name,waifu.source] for waifu in self.waifus]
         #need to convert because votes may be np arrays in older versions, or ratings np floats which don't store right with yaml

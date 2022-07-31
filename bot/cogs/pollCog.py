@@ -138,7 +138,10 @@ class PollCog(commands.Cog):
             await self.bot.respond(inter,'WAIFU.POLL.JUMP.NONE',ephemeral=True)
             return
         try:
-            await self.bot.respond(inter,'WAIFU.POLL.JUMP.SUCCESS',poll.quickLink,ephemeral=True)
+            if poll.quickLink is not None:
+                await self.bot.respond(inter,'WAIFU.POLL.JUMP.SUCCESS',poll.quickLink,ephemeral=True)
+            else:
+                raise AttributeError
         except AttributeError:
             await self.bot.respond(inter,'WAIFU.POLL.JUMP.OLD',ephemeral=True)
         
