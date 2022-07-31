@@ -8,6 +8,7 @@ from polls import Poll, Waifu
 from headpatExceptions import *
 import matplotlib.pyplot as plt
 import numpy as np
+import yaml
 
 SAVE_FOLDER = os.path.join('guilds')
 if not os.path.exists(SAVE_FOLDER):
@@ -119,12 +120,22 @@ class Server:
         self.waifus.remove(toRemove)
 
     def save(self):
+        """
+            Saves the server to the file system
+        """
         filePath=os.path.join(SAVE_FOLDER,f'{self.identity}.p')
         with open(filePath,'wb') as saveFile:
             try:
                 pickle.dump(self,saveFile)
             except Exception as err:
                 logger.error(f'failed to pickle {self} with {err}')
+        
+        filePath=os.path.join(SAVE_FOLDER,f'{self.identity}.yaml')
+        with open(filePath,'w') as saveFile:
+            try:
+                yaml.safe_dump(self.getStorageDict(),saveFile)
+            except Exception as err:
+                logger.error(f'failed to yaml dump {self} with {err}')
 
     @property
     def asBytes(self):
