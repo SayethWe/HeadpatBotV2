@@ -147,14 +147,21 @@ class Server:
     def delete(self):
         filePath=os.path.join(SAVE_FOLDER,f'{self.identity}.p')
         os.remove(filePath)
+        filePath=os.path.join(SAVE_FOLDER,f'{self.identity}.yaml')
+        os.remove(filePath)
 
     @staticmethod
     def load(identity:int) -> Server:
-        try:
-            with open(os.path.join(SAVE_FOLDER,f'{identity}.p'),'rb') as loadFile:
-                loaded = pickle.load(loadFile)
-        except FileNotFoundError:
-            loaded=Server(identity)
+        try: #load from YAML
+            with open(os.path.join(SAVE_FOLDER,f'{identity}.yaml'),'rb') as loadFile:
+                dict=yaml.safe_load(loadFile)
+                loaded=Server.buildFromDict(dict)
+        except FileNotFoundError: #go to a pickle
+            try:
+                with open(os.path.join(SAVE_FOLDER,f'{identity}.p'),'rb') as loadFile:
+                    loaded = pickle.load(loadFile)
+            except FileNotFoundError: #fall back to a new server
+                loaded=Server(identity)
         return loaded
 
     def getWaifuByNameSource(self,name:str,source:str):

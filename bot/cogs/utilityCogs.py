@@ -69,7 +69,7 @@ class TimerCog(commands.Cog):
                     images.saveRawPollImage(waifuImage,waifuHash,images.sourceNameFolder(name,source))
             allGuilds=await database.getAllGuilds()
             for guildId in allGuilds:
-                guild = await database.getGuildPickle(guildId)
+                guild = await database.getGuild(guildId)
                 guild.save()
 
     @tasks.loop(hours=3)

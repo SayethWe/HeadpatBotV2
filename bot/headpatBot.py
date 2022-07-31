@@ -34,7 +34,7 @@ class HeadpatBot(commands.InteractionBot):
         self.logger.info(f"Logging in as {self.user}")
         for guild in self.guilds:
             try:
-                server = await database.getGuildPickle(guild.id)  # place 1 database is used
+                server = await database.getGuild(guild.id)  # place 1 database is used
                 server.save()
             except (UnpicklingError, TypeError, AttributeError):
                 pass

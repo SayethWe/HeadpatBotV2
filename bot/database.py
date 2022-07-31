@@ -1,7 +1,7 @@
 from guilds import Server
 import asyncpg as db
 import qoi
-import os, pickle, asyncio
+import os, pickle, asyncio, logging
 import yaml
 
 IGNORE_DATABASE_ENVVAR='NO_DATABASE'
@@ -11,6 +11,7 @@ enabled = True #allows others to query if they should make database requests
 if link == IGNORE_DATABASE_ENVVAR:
     enabled = False
 
+logger=logging.getLogger(os.environ['LOGGER_NAME'])
 
 async def doCommandReturnAll(command:str,*args):
     if not enabled:
@@ -44,10 +45,14 @@ async def createTables():
     for cmdString in cmdStrings:
         await doCommand(cmdString)
 
-async def getGuildPickle(guildId:int) -> Server:
-    cmdString="SELECT data FROM guilds WHERE id =$1"
-    pickle_string = await doCommandReturn(cmdString,guildId)
-    return pickle.loads(pickle_string.get('data'))
+async def getGuild(guildId:int) -> Server:
+    cmdString="SELECT data, yaml FROM guilds WHERE id =$1"
+    stored_server = await doCommandReturn(cmdString,guildId)
+    try:
+        return Server.buildFromDict(yaml.safe_load(stored_server.get('yaml')))
+    except Exception as err:
+        logger.warning(f'error trying to load {guildId} from yaml',stack_info=True,exc_info=err)
+        return pickle.loads(stored_server.get('data'))
 
 async def storeGuild(guild:Server):
     cmdString = """INSERT INTO guilds (id, data, yaml) VALUES ($1 ,$2, $3)
