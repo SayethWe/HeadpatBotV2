@@ -295,7 +295,7 @@ class GachaCog(commands.Cog):
     ):
         server=self.bot.servers[inter.guild.id]
         claimed=server.claimedWaifus(inter.author.id)
-        await inter.send(claimed)
+        await self.bot.respond(inter,'GACHA.LIST',len(claimed),'\n'.join([f'__{claim.name}__ of __{claim.source}__' for claim in claimed]))
 
     @gacha.sub_command(
         description="unclaim a waifu and get some tickets back"

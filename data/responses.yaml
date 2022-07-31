@@ -156,3 +156,5 @@ GACHA:
       - You don't have the {0} tickets required
     SUCCESS: 
       - spent {0} tickets to raise {1} to level {2}
+  LIST:
+    - You've collected the following **{0}** waifus:[NEWLINE]{1}
