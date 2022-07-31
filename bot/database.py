@@ -1,8 +1,8 @@
-from pydoc import doc
 from guilds import Server
 import asyncpg as db
 import qoi
 import os, pickle, asyncio
+import yaml
 
 IGNORE_DATABASE_ENVVAR='NO_DATABASE'
 link = os.environ['DATABASE_URL']
@@ -37,7 +37,7 @@ async def doCommand(command:str,*args):
 
 async def createTables():
     cmdStrings=(
-        "CREATE TABLE IF NOT EXISTS guilds(id BIGINT PRIMARY KEY, data BYTEA)", 
+        "CREATE TABLE IF NOT EXISTS guilds(id BIGINT PRIMARY KEY, data BYTEA, yaml TEXT)", 
         "CREATE TABLE IF NOT EXISTS waifus(name TEXT, source TEXT, data BYTEA, hash BIGINT UNIQUE)",
         "CREATE TABLE IF NOT EXISTS approvals(hash BIGINT PRIMARY KEY, data BYTEA, name TEXT, source TEXT)"
     )
@@ -49,13 +49,14 @@ async def getGuildPickle(guildId:int) -> Server:
     pickle_string = await doCommandReturn(cmdString,guildId)
     return pickle.loads(pickle_string.get('data'))
 
-async def storeGuildPickle(guild:Server):
-    cmdString = """INSERT INTO guilds (id, data) VALUES ($1 ,$2)
+async def storeGuild(guild:Server):
+    cmdString = """INSERT INTO guilds (id, data, yaml) VALUES ($1 ,$2, $3)
     ON CONFLICT (id) DO UPDATE
-    SET data = excluded.data
+    SET (data,yaml) = (excluded.data,excluded.yaml)
     """
     pickle_bytes = guild.asBytes
-    await doCommand(cmdString,guild.identity,pickle_bytes)
+    yaml_string=yaml.safe_dump(guild.getStorageDict())
+    await doCommand(cmdString,guild.identity,pickle_bytes,yaml_string)
 
 async def removeGuild(guildId:int):
     cmdString = "DELETE FROM guilds WHERE id = $1"

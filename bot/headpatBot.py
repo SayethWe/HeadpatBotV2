@@ -44,9 +44,9 @@ class HeadpatBot(commands.InteractionBot):
 
     async def on_disconnect(self): #events to fire when closing
         self.logger.flush()
-        storageCog = self.get_cog('StorageCog')
-        await storageCog.storeFiles()
-        await storageCog.storeDatabase()
+        #storageCog = self.get_cog('StorageCog')
+        #await storageCog.storeFiles()
+        #await storageCog.storeDatabase()
 
     async def on_slash_command_error(
         self,
@@ -86,7 +86,7 @@ class HeadpatBot(commands.InteractionBot):
         #save pickle
         s.save()
         #add to database
-        await database.storeGuildPickle(s)                # place 2 database is used
+        await database.storeGuild(s)                # place 2 database is used
 
     async def on_guild_remove(
         self,

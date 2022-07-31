@@ -44,7 +44,7 @@ class TimerCog(commands.Cog):
         self.logger.info('Saving filesystem to database')
         async with self.dbLock:
             for server in self.bot.servers.values():
-                await database.storeGuildPickle(server)
+                await database.storeGuild(server)
             for waifuImage in glob.glob('*/*/*.qoi',root_dir=images.POLL_FOLDER):
                 waifuData=waifuImage.split('/')
                 imagePath=os.path.join(images.POLL_FOLDER,waifuImage)
@@ -122,7 +122,7 @@ class TestCog(commands.Cog):
         server=self.bot.servers[inter.guild.id]
         with open('info.txt','w') as file:
             file.write(str(server))
-        await database.storeGuildPickle(server)
+        await database.storeGuild(server)
         with open('info.txt','rb') as fileRaw:
             file=File(fileRaw,filename='info.txt')
             await inter.send(f'storing',file=file)
