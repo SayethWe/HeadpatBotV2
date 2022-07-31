@@ -2,6 +2,7 @@
 .vscode
 img/waifu
 guilds/*.p
+guilds/*.yaml
 postgre
 __pycache__
 utilities
@@ -13,3 +14,4 @@ Waifus.txt
 failedList*.txt
 bot/testing.py
 prune.py
+info.txt
