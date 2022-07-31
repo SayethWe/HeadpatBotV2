@@ -67,7 +67,7 @@ async def storeWaifu(waifuData:WaifuData,image,imageHash:int):
     await doCommand(cmdString,waifuData.name,waifuData.source,data,imageHash)
 
 async def storeWaifuFile(waifuData:WaifuData,imagePath:str,imageHash:int):
-    await storeWaifu(waifuData.name,waifuData.source,qoi.read(imagePath),imageHash)
+    await storeWaifu(waifuData,qoi.read(imagePath),imageHash)
 
 async def loadWaifu(imageHash:int):
     cmdString = "SELECT data FROM waifus WHERE hash = $1"

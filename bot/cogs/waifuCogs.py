@@ -2,7 +2,6 @@
 import os, logging
 import glob, io
 from aiohttp import ClientSession
-from bot.images import waifuFolder
 #local imports
 from headpatExceptions import *
 from injections import WaifuData, folderWaifu, nameSourceWaifu, gachaWaifu

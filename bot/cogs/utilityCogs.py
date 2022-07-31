@@ -6,7 +6,7 @@ import glob
 #local imports
 import database, images
 from headpatBot import HeadpatBot
-from bot.injections import folderWaifu
+from injections import folderWaifu
 #library imports
 from disnake import ApplicationCommandInteraction, File
 from disnake.ext import commands, tasks
@@ -46,9 +46,10 @@ class TimerCog(commands.Cog):
             for server in self.bot.servers.values():
                 await database.storeGuildPickle(server)
             for waifuImage in glob.glob('*/*/*.qoi',root_dir=images.POLL_FOLDER):
-                waifuData=waifuImage.split('/')
+                waifuTuple=waifuImage.split('/')
                 imagePath=os.path.join(images.POLL_FOLDER,waifuImage)
-                await database.storeWaifuFile(folderWaifu(waifuData),imagePath,int(waifuData[2].replace('.qoi','')))
+                waifuData=await folderWaifu(waifuImage)
+                await database.storeWaifuFile(waifuData,imagePath,int(waifuTuple[2].replace('.qoi','')))
 
     @storeDatabase.before_loop
     @storeFiles.before_loop
