@@ -1,3 +1,4 @@
+from __future__ import annotations
 from dataclasses import dataclass
 import logging, os
 from enum import Enum
@@ -22,12 +23,31 @@ class Waifu():
     A server-side Waifu
     """
     def __init__(self,name:str,source:str,rating:int):
-        self.name=name
-        self.source=source
+        self.name=name.title()
+        self.source=source.title()
         self.rating=rating
         self._claimer=0
         self._claimedAt=Waifu.DEFAULT_CLAIM_TIME
         self._level=0
+
+    def getStorageDict(self):
+        store = {}
+        store['name']=self.name
+        store['source']=self.source
+        store['rating']=int(self.rating) #can be an np datatype sometimes. ensure int for storage.
+        store['claimer']=self.claimer
+        store['claimTime']=self.claimedAt
+        store['level']=self.level
+        return store
+
+    @staticmethod
+    def buildFromDict(waifuDict) -> Waifu:
+        #logger.debug(str(waifuDict))
+        waifu = Waifu(waifuDict['name'],waifuDict['source'],waifuDict.get('rating',1))
+        waifu._claimer=waifuDict.get('claimer',waifu.claimer)
+        waifu._claimedAt=waifuDict.get('claimTime',waifu.claimedAt)
+        waifu._level=waifuDict.get('level',waifu.level)
+        return waifu
 
     def __repr__(self):
         return f'{self.name} is a waifu from {self.source} with a rating of {self.rating}'
@@ -114,6 +134,45 @@ class Poll:
         self.voters=[list[int]() for _ in range(size)]
         self.size = size
         
+    def getStorageDict(self):
+        store={}
+        store['guildId']=self.messageId
+        store['size']=self.size
+        store['link']=self.quickLink
+        store['open']=self.open
+        store['waifus'] = [[waifu.name,waifu.source] for waifu in self.waifus]
+        #need to convert because votes may be np arrays in older versions, or ratings np floats which don't store right with yaml
+        store['ratings']=[int(rating) for rating in self.ratings]
+        store['votes']=[int(vote) for vote in self.votes]
+        if self.open:
+            #need to store vote and user specifics
+            store['users']=self.users
+            store['voters']=self.voters
+            store['claimers']=self.claimers
+            store['levels']=self.levels
+        else:
+            #we can forget the stuff we're not going to need anymore, and store placeholders for some references
+            store['users']=[0]*len(self.users)
+        return store
+
+    @staticmethod
+    def buildFromDict(pollDict):
+        #have to pull the waifus from the parent server otherwise we'll create our own and lose the link for updating ratings
+        #this is adressed -> we copy on start, and pass up on end
+        poll = Poll(pollDict['guildId'],pollDict['size'],pollDict['link'])
+        poll.open=pollDict['open']
+        poll.ratings=pollDict['ratings']
+        poll._claimers=pollDict.get('claimers',[])
+        poll._levels=pollDict.get('levels',[])
+        poll.waifus=[None]*pollDict['size']
+        for i in range(pollDict['size']):
+            waifuTuple=pollDict['waifus'][i]
+            poll.waifus[i]=WaifuData(waifuTuple[0],waifuTuple[1])
+        poll.votes=pollDict['votes']
+        poll.users=pollDict.get('users',[])
+        poll.voters=pollDict.get('voters',[[]])
+        return poll
+
     def addVote(self,index:int):
         self.votes[index] +=1
 

@@ -52,6 +52,28 @@ class Server:
         self.options=ServerOption.defaultOptions()
         self.tickets=dict[int,int]()
 
+    def getStorageDict(self):
+        store = {}
+        store["identity"]=self.identity
+        store["waifus"]=[waifu.getStorageDict() for waifu in self.waifus]
+        store["polls"] =[poll.getStorageDict() for poll in self.polls]
+        store["options"]=self.options
+        store["tickets"]=self.tickets
+        return store
+
+    @staticmethod
+    def buildFromDict(serverDict:dict) -> Server:
+        loaded=Server(serverDict["identity"])
+        waifus=serverDict.get("waifus",[])
+        #logger.debug(str(waifus))
+        loaded.waifus=[Waifu.buildFromDict(waifuDict) for waifuDict in waifus]
+        polls=serverDict.get("polls",[])
+        #logger.debug(str(polls))
+        loaded.polls=[Poll.buildFromDict(pollDict) for pollDict in polls]
+        loaded.options=serverDict.get("options",loaded.options)
+        loaded.tickets=serverDict.get("tickets",loaded.tickets)
+        return loaded
+
     class ServerOption(Enum):
         #need to stick around for backward compatibility. Figure out how to get rid of these in stored guilds. all unused except when unpickling
         PollWaifuCount='pollSize' #how many waifus to put in a poll

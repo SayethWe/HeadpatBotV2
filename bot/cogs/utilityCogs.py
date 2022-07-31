@@ -3,6 +3,7 @@ from asyncio import Lock, run
 import logging, os
 from statistics import stdev
 import glob
+from guilds import Server
 #local imports
 import database, images
 from headpatBot import HeadpatBot
@@ -125,6 +126,34 @@ class TestCog(commands.Cog):
         with open('info.txt','rb') as fileRaw:
             file=File(fileRaw,filename='info.txt')
             await inter.send(f'storing',file=file)
+
+    @commands.slash_command()
+    async def dump_dict(self,inter:ApplicationCommandInteraction):
+        await inter.response.defer(ephemeral=True)
+        server1=self.bot.servers[inter.guild.id]
+        with open('info.txt','w') as file:
+            file.write("Safe Dumping Server With Load")
+            file.write('\n---\nRaw server:\n')
+            file.write(str(server1))
+            dict1 = server1.getStorageDict()
+            file.write('\n---\ndictionary:\n')
+            file.write(str(dict1))
+            file.write('\n---\nsafe yaml:\n')
+            yaml1=str(yaml.safe_dump(dict1))
+            file.write(yaml1)
+            dict2=yaml.safe_load(yaml1)
+            file.write('\n---\nloaded dict:\n')
+            file.write(str(dict2))
+            server2 = Server.buildFromDict(dict1)
+            file.write('\n---\nserver from original dict:\n')
+            file.write(str(server2))
+            server3 = Server.buildFromDict(dict2)
+            file.write('\n---\nserver from loaded dict:\n')
+            file.write(str(server3))
+            
+        with open('info.txt','rb') as fileRaw:
+            file=File(fileRaw,filename='info.txt')
+            await inter.send(f'as dictionary',file=file,ephemeral=True)
 
     @commands.slash_command()
     async def ratings(self,inter):
