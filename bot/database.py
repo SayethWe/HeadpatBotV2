@@ -1,7 +1,7 @@
 from guilds import Server
 import asyncpg as db
 import qoi
-import os, pickle, asyncio, logging
+import os, asyncio, logging
 import yaml
 
 IGNORE_DATABASE_ENVVAR='NO_DATABASE'
@@ -38,7 +38,7 @@ async def doCommand(command:str,*args):
 
 async def createTables():
     cmdStrings=(
-        "CREATE TABLE IF NOT EXISTS guilds(id BIGINT PRIMARY KEY, data BYTEA, yaml TEXT)", 
+        "CREATE TABLE IF NOT EXISTS guilds(id BIGINT PRIMARY KEY, yaml TEXT)", 
         "CREATE TABLE IF NOT EXISTS waifus(name TEXT, source TEXT, data BYTEA, hash BIGINT UNIQUE)",
         "CREATE TABLE IF NOT EXISTS approvals(hash BIGINT PRIMARY KEY, data BYTEA, name TEXT, source TEXT)"
     )
@@ -48,22 +48,15 @@ async def createTables():
 async def getGuild(guildId:int) -> Server:
     cmdString="SELECT data, yaml FROM guilds WHERE id =$1"
     stored_server = await doCommandReturn(cmdString,guildId)
-    try:
-        return Server.buildFromDict(yaml.safe_load(stored_server.get('yaml')))
-    except Exception as err:
-        logger.warning(f'error trying to load {guildId} from yaml',stack_info=True,exc_info=err)
-        server=pickle.loads(stored_server.get('data'))
-        await storeGuild(server)
-        return server
+    return Server.buildFromDict(yaml.safe_load(stored_server.get('yaml')))
 
 async def storeGuild(guild:Server):
-    cmdString = """INSERT INTO guilds (id, data, yaml) VALUES ($1 ,$2, $3)
+    cmdString = """INSERT INTO guilds (id, yaml) VALUES ($1 ,$2)
     ON CONFLICT (id) DO UPDATE
-    SET (data,yaml) = (excluded.data,excluded.yaml)
+    SET yaml = excluded.yaml
     """
-    pickle_bytes = guild.asBytes
     yaml_string=yaml.safe_dump(guild.getStorageDict())
-    await doCommand(cmdString,guild.identity,pickle_bytes,yaml_string)
+    await doCommand(cmdString,guild.identity,yaml_string)
 
 async def removeGuild(guildId:int):
     cmdString = "DELETE FROM guilds WHERE id = $1"

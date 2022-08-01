@@ -3,7 +3,6 @@ from enum import Enum
 import os, logging
 from math import sqrt
 import images
-import pickle
 from polls import Poll, Waifu
 from headpatExceptions import *
 import matplotlib.pyplot as plt
@@ -68,14 +67,15 @@ class Server:
     @staticmethod
     def buildFromDict(serverDict:dict) -> Server:
         loaded=Server(serverDict["identity"])
-        waifus=serverDict.get("waifus",[])
+        waifus=serverDict["waifus"]
         #logger.debug(str(waifus))
         loaded.waifus=[Waifu.buildFromDict(waifuDict) for waifuDict in waifus]
-        polls=serverDict.get("polls",[])
+        polls=serverDict["polls"]
         #logger.debug(str(polls))
         loaded.polls=[Poll.buildFromDict(pollDict) for pollDict in polls]
-        loaded.options=serverDict.get("options",loaded.options)
-        loaded.tickets=serverDict.get("tickets",loaded.tickets)
+        for option in ServerOption:
+            loaded.setOption(option,serverDict["options"].get(option.key,option.defaultValue))
+        loaded.tickets=serverDict["tickets"] 
         return loaded
 
     class ServerOption(Enum):
@@ -126,13 +126,6 @@ class Server:
         """
             Saves the server to the file system
         """
-        filePath=os.path.join(SAVE_FOLDER,f'{self.identity}.p')
-        with open(filePath,'wb') as saveFile:
-            try:
-                pickle.dump(self,saveFile)
-            except Exception as err:
-                logger.error(f'failed to pickle {self} with {err}')
-        
         filePath=os.path.join(SAVE_FOLDER,f'{self.identity}.yaml')
         with open(filePath,'w') as saveFile:
             try:
@@ -162,12 +155,8 @@ class Server:
             with open(os.path.join(SAVE_FOLDER,f'{identity}.yaml'),'rb') as loadFile:
                 dict=yaml.safe_load(loadFile)
                 loaded=Server.buildFromDict(dict)
-        except FileNotFoundError: #go to a pickle
-            try:
-                with open(os.path.join(SAVE_FOLDER,f'{identity}.p'),'rb') as loadFile:
-                    loaded = pickle.load(loadFile)
-            except FileNotFoundError: #fall back to a new server
-                loaded=Server(identity)
+        except FileNotFoundError: #create a new
+            loaded=Server(identity)
         return loaded
 
     def getWaifuByNameSource(self,name:str,source:str):

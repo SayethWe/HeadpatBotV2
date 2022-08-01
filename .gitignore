@@ -1,4 +1,5 @@
 .venv
+.prod
 .vscode
 img/waifu
 guilds/*.p
