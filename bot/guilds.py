@@ -78,18 +78,6 @@ class Server:
         loaded.tickets=serverDict["tickets"] 
         return loaded
 
-    class ServerOption(Enum):
-        #need to stick around for backward compatibility. Figure out how to get rid of these in stored guilds. all unused except when unpickling
-        PollWaifuCount='pollSize' #how many waifus to put in a poll
-        PollParticipationCheckStartHours='pollCheckZero' #when to start checking for poll participations
-        PollParticipationCheckDeltaHours='pollCheckDelta' #how often to check poll participation
-        PollEndHours='pollForceEnd' #when to stop checkign and just end the poll
-        PollParticipationCheckCount='pollParticipation' #how many people should vote to end poll
-        PollWaifuImageSizePixels='waifuImageSize' #how many pixels to make the tiles in the poll collage, unused
-        PollStartNextGapHours='pollNextDelay' #how long to wait after endeing a poll to start the next, unused
-        GachaMaxWaifus='gachaMaximumCollection'
-        GachaExpiryHours='gachaExpiryTime'
-
     def getOption(self,option:ServerOption) -> int:
         try:
             return self.options[option.key]
@@ -134,14 +122,6 @@ class Server:
                 logger.error(f'failed to yaml dump {self} with {err}')
                 newServer=Server(self.identity)
                 yaml.safe_dump(newServer.getStorageDict(),saveFile)
-
-
-    @property
-    def asBytes(self):
-        try:
-            return pickle.dumps(self)
-        except Exception as err:
-            logger.error(f'failed to pickle {self} with {err}')
 
     def delete(self):
         filePath=os.path.join(SAVE_FOLDER,f'{self.identity}.p')
@@ -213,15 +193,7 @@ class Server:
         self.polls.remove(poll)
     
     def ensureTickets(self,user:int):
-        try:
-            self.tickets
-        except AttributeError:
-            self.tickets = dict[int,int]() #backwards compatibility code
-        try:
-            if user not in self.tickets:
-                self.tickets[user]=0
-        except TypeError: #account for existing dumb mistake
-            self.tickets=dict[int,int]()
+        if user not in self.tickets:
             self.tickets[user]=0
 
     def modifyTickets(self,user:int,delta:int):

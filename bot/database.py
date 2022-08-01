@@ -46,7 +46,7 @@ async def createTables():
         await doCommand(cmdString)
 
 async def getGuild(guildId:int) -> Server:
-    cmdString="SELECT data, yaml FROM guilds WHERE id =$1"
+    cmdString="SELECT yaml FROM guilds WHERE id =$1"
     stored_server = await doCommandReturn(cmdString,guildId)
     return Server.buildFromDict(yaml.safe_load(stored_server.get('yaml')))
 

@@ -26,9 +26,9 @@ class Waifu():
         self.name=name.title()
         self.source=source.title()
         self.rating=rating
-        self._claimer=0
-        self._claimedAt=Waifu.DEFAULT_CLAIM_TIME
-        self._level=0
+        self.claimer=0
+        self.claimedAt=Waifu.DEFAULT_CLAIM_TIME
+        self.level=0
 
     def getStorageDict(self):
         store = {}
@@ -44,9 +44,9 @@ class Waifu():
     def buildFromDict(waifuDict) -> Waifu:
         #logger.debug(str(waifuDict))
         waifu = Waifu(waifuDict['name'],waifuDict['source'],waifuDict.get('rating',1))
-        waifu._claimer=waifuDict.get('claimer',waifu.claimer)
-        waifu._claimedAt=waifuDict.get('claimTime',waifu.claimedAt)
-        waifu._level=waifuDict.get('level',waifu.level)
+        waifu.claimer=waifuDict.get('claimer',waifu.claimer)
+        waifu.claimedAt=waifuDict.get('claimTime',waifu.claimedAt)
+        waifu.level=waifuDict.get('level',waifu.level)
         return waifu
 
     def __repr__(self):
@@ -56,25 +56,6 @@ class Waifu():
         self.rating+=delta
 
     @property
-    def claimer(self) -> int|None:
-        try:
-            self._claimer 
-        except AttributeError:
-            self._claimer=0 #more backwards compatibility code
-        return self._claimer
-
-    @property
-    def claimedAt(self) -> datetime:
-        try:
-            return self._claimedAt
-        except AttributeError:
-            if self.claimer == 0:
-                self._claimedAt=Waifu.DEFAULT_CLAIM_TIME
-            else:
-                self._claimedAt=datetime.now(timezone.utc)
-        return self._claimedAt
-
-    @property
     def hoursSinceClaimed(self) -> float:
         if self.claimedAt==Waifu.DEFAULT_CLAIM_TIME:
             return 0
@@ -82,30 +63,19 @@ class Waifu():
             delta = datetime.now(timezone.utc)-self.claimedAt
             return delta.days*24+delta.seconds/3600
 
-    @property
-    def level(self) -> int:
-        try:
-            return self._level
-        except AttributeError:
-            if self.claimer == 0:
-                self._level=1
-            else:
-                self._level=0
-        return self._level
-
     def claim(self,claimer:int):
-        self._claimer=claimer
-        self._claimedAt=datetime.now(timezone.utc)
-        self._level=1
+        self.claimer=claimer
+        self.claimedAt=datetime.now(timezone.utc)
+        self.level=1
 
     def release(self):
-        self._claimer=0
-        self._claimedAt=Waifu.DEFAULT_CLAIM_TIME
-        self._level=0
+        self.claimer=0
+        self.claimedAt=Waifu.DEFAULT_CLAIM_TIME
+        self.level=0
         #self.updateRating(-1)
 
     def improve(self):
-        self._level+=1
+        self.level+=1
 
 class Poll:
     """
@@ -128,8 +98,8 @@ class Poll:
         self.users=list[int]()
         self.waifus=list[WaifuData]()
         self.ratings=list[int]()
-        self._claimers=list[int]()
-        self._levels=list[int]()
+        self.claimers=list[int]()
+        self.levels=list[int]()
         self.votes=[0]*size
         self.voters=[list[int]() for _ in range(size)]
         self.size = size
@@ -168,8 +138,8 @@ class Poll:
         poll = Poll(pollDict['guildId'],pollDict['size'],pollDict['link'])
         poll.open=pollDict['open']
         poll.ratings=pollDict['ratings']
-        poll._claimers=pollDict.get('claimers',[])
-        poll._levels=pollDict.get('levels',[])
+        poll.claimers=pollDict.get('claimers',[])
+        poll.levels=pollDict.get('levels',[])
         poll.waifus=[None]*pollDict['size']
         for i in range(pollDict['size']):
             waifuTuple=pollDict['waifus'][i]
@@ -200,8 +170,8 @@ class Poll:
             names.append(choice.name)
             sources.append(choice.source)
             self.ratings.append(choice.rating)
-            self._claimers.append(choice.claimer)
-            self._levels.append(choice.level)
+            self.claimers.append(choice.claimer)
+            self.levels.append(choice.level)
             self.waifus.append(WaifuData(choice.name,choice.source))
         self.open=True #only now do we mark open
         return (names,sources)
@@ -414,20 +384,6 @@ class Poll:
 
     def __repr__(self) -> str:
         return f'Poll with{vars(self)}'
-    
-    @property
-    def claimers(self):
-        try:
-            return self._claimers
-        except AttributeError:
-            return [waifu.claimer for waifu in self.waifus]
-
-    @property
-    def levels(self):
-        try:
-            return self._levels
-        except AttributeError:
-            return [waifu.level for waifu in self.waifus]
 
 @dataclass
 class PollResults:
