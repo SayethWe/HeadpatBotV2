@@ -3,12 +3,12 @@ from enum import Enum
 import os, logging
 from math import sqrt
 import images
-import pickle
 from polls import Poll, Waifu
 from headpatExceptions import *
 from injections import WaifuData
 import matplotlib.pyplot as plt
 import numpy as np
+import yaml
 
 SAVE_FOLDER = os.path.join('guilds')
 if not os.path.exists(SAVE_FOLDER):
@@ -22,7 +22,7 @@ class ServerOption(Enum):
         GachaMaxWaifus=('gacha collection max count',8,0,25)
         GachaExpiryHours=('gacha collection expiration hours',150,5,10000)
 
-        @property
+        @staticmethod
         def defaultOptions() -> dict[str,int]:
             options=dict[str,int]()
             for option in ServerOption:
@@ -50,20 +50,34 @@ class Server:
         self.identity = identity
         self.waifus=list[Waifu]()
         self.polls=list[Poll]()
-        self.options=ServerOption.defaultOptions
+        self.options=ServerOption.defaultOptions()
         self.tickets=dict[int,int]()
 
-    class ServerOption(Enum):
-        #need to stick around for backward compatibility. Figure out how to get rid of these in stored guilds. all unused except when unpickling
-        PollWaifuCount='pollSize' #how many waifus to put in a poll
-        PollParticipationCheckStartHours='pollCheckZero' #when to start checking for poll participations
-        PollParticipationCheckDeltaHours='pollCheckDelta' #how often to check poll participation
-        PollEndHours='pollForceEnd' #when to stop checkign and just end the poll
-        PollParticipationCheckCount='pollParticipation' #how many people should vote to end poll
-        PollWaifuImageSizePixels='waifuImageSize' #how many pixels to make the tiles in the poll collage, unused
-        PollStartNextGapHours='pollNextDelay' #how long to wait after endeing a poll to start the next, unused
-        GachaMaxWaifus='gachaMaximumCollection'
-        GachaExpiryHours='gachaExpiryTime'
+    def getStorageDict(self):
+        store = {}
+        store["identity"]=self.identity
+        store["waifus"]=[waifu.getStorageDict() for waifu in self.waifus]
+        store["polls"] =[poll.getStorageDict() for poll in self.polls]
+        store["options"]=self.options
+        try:
+            store["tickets"]=self.tickets
+        except AttributeError:
+            store["tickets"]=dict[int,int]()
+        return store
+
+    @staticmethod
+    def buildFromDict(serverDict:dict) -> Server:
+        loaded=Server(serverDict["identity"])
+        waifus=serverDict["waifus"]
+        #logger.debug(str(waifus))
+        loaded.waifus=[Waifu.buildFromDict(waifuDict) for waifuDict in waifus]
+        polls=serverDict["polls"]
+        #logger.debug(str(polls))
+        loaded.polls=[Poll.buildFromDict(pollDict) for pollDict in polls]
+        for option in ServerOption:
+            loaded.setOption(option,serverDict["options"].get(option.key,option.defaultValue))
+        loaded.tickets=serverDict["tickets"] 
+        return loaded
 
     def getOption(self,option:ServerOption) -> int:
         try:
@@ -98,20 +112,31 @@ class Server:
         self.waifus.remove(toRemove)
 
     def save(self):
-        filePath=os.path.join(SAVE_FOLDER,f'{self.identity}.p')
-        with open(filePath,'wb') as saveFile:
-            pickle.dump(self,saveFile)
+        """
+            Saves the server to the file system
+        """
+        filePath=os.path.join(SAVE_FOLDER,f'{self.identity}.yaml')
+        with open(filePath,'w') as saveFile:
+            try:
+                yaml.safe_dump(self.getStorageDict(),saveFile)
+            except Exception as err:
+                logger.error(f'failed to yaml dump {self} with {err}')
+                newServer=Server(self.identity)
+                yaml.safe_dump(newServer.getStorageDict(),saveFile)
 
     def delete(self):
         filePath=os.path.join(SAVE_FOLDER,f'{self.identity}.p')
         os.remove(filePath)
+        filePath=os.path.join(SAVE_FOLDER,f'{self.identity}.yaml')
+        os.remove(filePath)
 
     @staticmethod
     def load(identity:int) -> Server:
-        try:
-            with open(os.path.join(SAVE_FOLDER,f'{identity}.p'),'rb') as loadFile:
-                loaded = pickle.load(loadFile)
-        except FileNotFoundError:
+        try: #load from YAML
+            with open(os.path.join(SAVE_FOLDER,f'{identity}.yaml'),'rb') as loadFile:
+                dict=yaml.safe_load(loadFile)
+                loaded=Server.buildFromDict(dict)
+        except FileNotFoundError: #create a new
             loaded=Server(identity)
         return loaded
 
@@ -133,23 +158,43 @@ class Server:
     def __repr__(self):
         return f'name:{self.__class__.__name__},guildId={self.identity}\n{len(self.waifus)} waifus={self.waifus}\n{len(self.polls)} polls={self.polls}\noptions={self.options}'
 
-    def addPoll(self,poll:Poll):
-        self.polls.append(poll)
-        return len(self.polls)-1
+    def addPoll(self,quickLink:str):
+        """"
+            creates a new poll and starts it, returning the image and view
+        """
+        if len(self.polls)!=0: #other polls have run
+            if self.polls[-1].open: #another poll is running
+                raise InvalidPollStateError
+        newPoll=Poll(self.identity,self.getOption(ServerOption.PollWaifuCount),quickLink)
+        #select options
+        (names, sources) = newPoll.startPoll(self.waifus)
+        #create image
+        image = images.createPollImage(names,sources,self.getOption(ServerOption.PollWaifuImageSizePixels),self.getOption(ServerOption.PollWaifuImageAspect))
+        imageBytes=images.imageToBytes(image)
+        #create vote buttons
+        buttons=newPoll.createPollButtons(len(self.polls))
+        self.polls.append(newPoll)
+        return (len(self.polls)-1,imageBytes,buttons)
+
+    def endPoll(self):
+        if len(self.polls) == 0: #ensure polls have run
+            raise InvalidPollStateError
+        poll=self.polls[-1]
+        if not poll.open: #and that the latest one is open
+            raise InvalidPollStateError
+        pollResults=poll.endPoll()
+        #award points
+        for userId in pollResults.awardTickets:
+            self.modifyTickets(userId,pollResults.awardTickets[userId])
+        #change ratings
+        for (name,source) in pollResults.ratingChanges:
+            self.getWaifuByNameSource(name,source).updateRating(pollResults.ratingChanges[(name,source)])
 
     def removePoll(self,poll:Poll):
         self.polls.remove(poll)
     
     def ensureTickets(self,user:int):
-        try:
-            self.tickets
-        except AttributeError:
-            self.tickets = dict[int,int]() #backwards compatibility code
-        try:
-            if user not in self.tickets:
-                self.tickets[user]=0
-        except TypeError: #account for existing dumb mistake
-            self.tickets=dict[int,int]()
+        if user not in self.tickets:
             self.tickets[user]=0
 
     def modifyTickets(self,user:int,delta:int):

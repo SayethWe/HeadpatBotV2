@@ -1,3 +1,5 @@
+from __future__ import annotations
+from dataclasses import dataclass
 import logging, os
 from enum import Enum
 from datetime import datetime, timezone
@@ -20,38 +22,38 @@ class Waifu():
     """
     A server-side Waifu
     """
-    def __init__(self,waifuData:WaifuData,rating:int):
-        self.name=waifuData.name
-        self.source=waifuData.source
+    def __init__(self,name:str,source:str,rating:int):
+        self.name=name.title()
+        self.source=source.title()
         self.rating=rating
-        self._claimer=0
-        self._claimedAt=Waifu.DEFAULT_CLAIM_TIME
-        self._level=0
+        self.claimer=0
+        self.claimedAt=Waifu.DEFAULT_CLAIM_TIME
+        self.level=0
+
+    def getStorageDict(self):
+        store = {}
+        store['name']=self.name
+        store['source']=self.source
+        store['rating']=int(self.rating) #can be an np datatype sometimes. ensure int for storage.
+        store['claimer']=self.claimer
+        store['claimTime']=self.claimedAt
+        store['level']=self.level
+        return store
+
+    @staticmethod
+    def buildFromDict(waifuDict) -> Waifu:
+        #logger.debug(str(waifuDict))
+        waifu = Waifu(waifuDict['name'],waifuDict['source'],waifuDict.get('rating',1))
+        waifu.claimer=waifuDict.get('claimer',waifu.claimer)
+        waifu.claimedAt=waifuDict.get('claimTime',waifu.claimedAt)
+        waifu.level=waifuDict.get('level',waifu.level)
+        return waifu
 
     def __repr__(self):
         return f'{self.name} is a waifu from {self.source} with a rating of {self.rating}'
 
     def updateRating(self,delta:int):
         self.rating+=delta
-
-    @property
-    def claimer(self) -> int|None:
-        try:
-            self._claimer 
-        except AttributeError:
-            self._claimer=0 #more backwards compatibility code
-        return self._claimer
-
-    @property
-    def claimedAt(self) -> datetime:
-        try:
-            return self._claimedAt
-        except AttributeError:
-            if self.claimer == 0:
-                self._claimedAt=Waifu.DEFAULT_CLAIM_TIME
-            else:
-                self._claimedAt=datetime.now(timezone.utc)
-        return self._claimedAt
 
     @property
     def hoursSinceClaimed(self) -> float:
@@ -61,30 +63,19 @@ class Waifu():
             delta = datetime.now(timezone.utc)-self.claimedAt
             return delta.days*24+delta.seconds/3600
 
-    @property
-    def level(self) -> int:
-        try:
-            return self._level
-        except AttributeError:
-            if self.claimer == 0:
-                self._level=1
-            else:
-                self._level=0
-        return self._level
-
     def claim(self,claimer:int):
-        self._claimer=claimer
-        self._claimedAt=datetime.now(timezone.utc)
-        self._level=1
+        self.claimer=claimer
+        self.claimedAt=datetime.now(timezone.utc)
+        self.level=1
 
     def release(self):
-        self._claimer=0
-        self._claimedAt=Waifu.DEFAULT_CLAIM_TIME
-        self._level=0
-        self.rating -= 1
+        self.claimer=0
+        self.claimedAt=Waifu.DEFAULT_CLAIM_TIME
+        self.level=0
+        #self.updateRating(-1)
 
     def improve(self):
-        self._level+=1
+        self.level+=1
 
 class Poll:
     """
@@ -105,12 +96,59 @@ class Poll:
         self.open = False
         self.quickLink = quickLink
         self.users=list[int]()
-        self.waifus=list[Waifu]()
+        self.waifus=list[WaifuData]()
         self.ratings=list[int]()
-        self.votes=np.zeros(shape=size,dtype=np.int64)
+        self.claimers=list[int]()
+        self.levels=list[int]()
+        self.votes=[0]*size
         self.voters=[list[int]() for _ in range(size)]
         self.size = size
         
+    def getStorageDict(self):
+        store={}
+        store['guildId']=self.messageId
+        store['size']=self.size
+        try:
+            store['link']=self.quickLink
+        except AttributeError:
+            store['link']=None
+        store['open']=self.open
+        store['waifus'] = [[waifu.name,waifu.source] for waifu in self.waifus]
+        #need to convert because votes may be np arrays in older versions, or ratings np floats which don't store right with yaml
+        try:
+            store['ratings']=[int(rating) for rating in self.ratings]
+        except AttributeError:
+            store['ratings']=[0]*self.size
+        store['votes']=[int(vote) for vote in self.votes]
+        if self.open:
+            #need to store vote and user specifics
+            store['users']=self.users
+            store['voters']=self.voters
+            store['claimers']=self.claimers
+            store['levels']=self.levels
+        else:
+            #we can forget the stuff we're not going to need anymore, and store placeholders for some references
+            store['users']=[0]*len(self.users)
+        return store
+
+    @staticmethod
+    def buildFromDict(pollDict):
+        #have to pull the waifus from the parent server otherwise we'll create our own and lose the link for updating ratings
+        #this is adressed -> we copy on start, and pass up on end
+        poll = Poll(pollDict['guildId'],pollDict['size'],pollDict['link'])
+        poll.open=pollDict['open']
+        poll.ratings=pollDict['ratings']
+        poll.claimers=pollDict.get('claimers',[])
+        poll.levels=pollDict.get('levels',[])
+        poll.waifus=[None]*pollDict['size']
+        for i in range(pollDict['size']):
+            waifuTuple=pollDict['waifus'][i]
+            poll.waifus[i]=WaifuData(waifuTuple[0],waifuTuple[1])
+        poll.votes=pollDict['votes']
+        poll.users=pollDict.get('users',[])
+        poll.voters=pollDict.get('voters',[[]])
+        return poll
+
     def addVote(self,index:int):
         self.votes[index] +=1
 
@@ -130,7 +168,9 @@ class Poll:
             choice = waifusIn[index]
             waifusOut.append(WaifuData(choice.name,choice.source))
             self.ratings.append(choice.rating)
-            self.waifus.append(choice)
+            self.claimers.append(choice.claimer)
+            self.levels.append(choice.level)
+            self.waifus.append(WaifuData(choice.name,choice.source))
         self.open=True #only now do we mark open
         return (waifusOut)
         
@@ -142,25 +182,21 @@ class Poll:
             # no one participated
             self.open=False
             logger.debug('Unparticipated poll')
-            return {}
-        ratingChanges = self.ratingChanges() #determine how much the ratings change
+            return PollResults({},{})
+        ratingDelta = self.ratingChanges()
+        ratingUpdates=dict[tuple[str,str],int]()
         awardPoints=dict[int,int]()
         #for each waifu in the poll
         for i in range(self.size):
-            #remove any users who didn't confirm
-            self.voters[i]=set(self.users).intersection(self.voters[i])
-            #set total votes to be the length
-            self.votes[i]=len(self.voters[i])
-            #update the ratings
-            self.waifus[i].updateRating(ratingChanges[i])
+            ratingUpdates[(self.waifus[i].name,self.waifus[i].source)]=ratingDelta[i]
             #award vote points to waifu claimer
-            Poll.addTicketsToDict(awardPoints,self.waifus[i].claimer,Poll.VOTING_TICKETS+int(self.votes[i]*np.log(self.waifus[i].level*self.waifu[i].level+1)))
+            Poll.addTicketsToDict(awardPoints,self.claimers[i],Poll.VOTING_TICKETS+int(self.votes[i]*np.log(self.levels[i]*self.levels[i]+1)))
         #for each user who voted
         for userId in self.users:
             #award participation points
             Poll.addTicketsToDict(awardPoints,userId,Poll.VOTING_TICKETS)
         self.open=False #after everything is done, close the poll, so if we error, it stays open.
-        return awardPoints
+        return PollResults(awardPoints,ratingUpdates)
 
     @staticmethod
     def addTicketsToDict(ticketsDict:dict[int,int],key:int,amt:int):
@@ -172,10 +208,10 @@ class Poll:
     def countVotes(self):
         return len(self.users)
 
-    def createPollButtons(self,pollInd:int,waifus:list[WaifuData]):
+    def createPollButtons(self,pollInd:int):
         buttons:list[Button]=[None]*(self.size+1)
         for i in range(self.size):
-            buttons[i] = Button(style=ButtonStyle.blurple,label=f'{waifus[i]}',custom_id=f'poll|{self.messageId}|{pollInd}|{i}')
+            buttons[i] = Button(style=ButtonStyle.blurple,label=f'{self.waifus[i]}',custom_id=f'poll|{self.messageId}|{pollInd}|{i}')
         buttons[-1]=Button(style=ButtonStyle.green,label='Confirm',custom_id=f'poll|{self.messageId}|{pollInd}|Confirm')
         return buttons
 
@@ -184,18 +220,23 @@ class Poll:
             return Poll.BUTTON_RESULTS.CLOSED
         elif userid not in self.voters[voteInd]: #user hasn't voted for this - add vote
             self.voters[voteInd].append(userid)
-            self.addVote(voteInd)
+            #self.addVote(voteInd)
             return Poll.BUTTON_RESULTS.VOTE_ADD
         else: #user is cancelling a vote
             self.voters[voteInd].remove(userid)
-            self.cancelVote(voteInd)
+            #self.cancelVote(voteInd)
             return Poll.BUTTON_RESULTS.VOTE_REMOVE
 
     def doConfirm(self,userid:int):
         if userid in self.users or not self.open:
             return Poll.BUTTON_RESULTS.CLOSED
         #TODO lock vote buttons by user, which cannot be done yet.
-        self.confirmVotes(userid)
+        #self.confirmVotes(userid)
+        self.users.append(userid)
+        for i in range(self.size):
+            if userid in self.voters[i]:
+                self.voters[i].remove(userid) #clear user out of votes because we no longer need to track that
+                self.votes[i] += 1 #store the vote anonymously
         return Poll.BUTTON_RESULTS.CONFIRM
 
     def performancePlot(self,ax:plt.Axes):
@@ -341,3 +382,8 @@ class Poll:
 
     def __repr__(self) -> str:
         return f'Poll with{vars(self)}'
+
+@dataclass
+class PollResults:
+    awardTickets:dict[int,int]
+    ratingChanges:dict[tuple[str,str],int]

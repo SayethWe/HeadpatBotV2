@@ -1,5 +1,4 @@
 import os, logging
-from pickle import UnpicklingError
 from aiohttp import ClientSession
 import disnake
 from disnake import Interaction, ApplicationCommandInteraction, File, Webhook, Guild
@@ -34,19 +33,20 @@ class HeadpatBot(commands.InteractionBot):
         self.logger.info(f"Logging in as {self.user}")
         for guild in self.guilds:
             try:
-                server = await database.getGuildPickle(guild.id)  # place 1 database is used
+                server = await database.getGuild(guild.id)  # place 1 database is used
                 server.save()
-            except (UnpicklingError, TypeError, AttributeError):
+            except Exception:
                 pass
             self.servers[guild.id]=Server.load(guild.id)
             self.logger.info(f"loading server {guild.name} with id {guild.id}")
+            await database.storeGuild(self.servers[guild.id])
         self.logger.info('bot is ready')
 
     async def on_disconnect(self): #events to fire when closing
         self.logger.flush()
-        storageCog = self.get_cog('StorageCog')
-        await storageCog.storeFiles()
-        await storageCog.storeDatabase()
+        #storageCog = self.get_cog('StorageCog')
+        #await storageCog.storeFiles()
+        #await storageCog.storeDatabase()
 
     async def on_slash_command_error(
         self,
@@ -86,7 +86,7 @@ class HeadpatBot(commands.InteractionBot):
         #save pickle
         s.save()
         #add to database
-        await database.storeGuildPickle(s)                # place 2 database is used
+        await database.storeGuild(s)                # place 2 database is used
 
     async def on_guild_remove(
         self,
