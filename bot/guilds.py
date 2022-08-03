@@ -5,6 +5,7 @@ from math import sqrt
 import images
 from polls import Poll, Waifu
 from headpatExceptions import *
+from injections import WaifuData
 import matplotlib.pyplot as plt
 import numpy as np
 import yaml
@@ -92,22 +93,22 @@ class Server:
             raise InvalidOptionValueError
         self.options[option.key]=value
 
-    def addWaifu(self,name:str,source:str):
-        if os.path.exists(os.path.join(images.POLL_FOLDER,images.sourceNameFolder(name,source))):
+    def addWaifu(self,waifuData:WaifuData):
+        if os.path.exists(images.waifuFolder(waifuData)):
             #full database has waifu
             try:
-                self.getWaifuByNameSource(name,source)
+                self.getWaifu(waifuData)
                 raise WaifuConflictError
             except WaifuDNEError:
                 #server does not have waifu
-                newWaifu = Waifu(name,source,1)
+                newWaifu = Waifu(waifuData.name,waifuData.source,1)
                 self.waifus.append(newWaifu)
                 return newWaifu
         else:
             raise WaifuDNEError
     
-    def removeWaifu(self,name:str,source:str):
-        toRemove=self.getWaifuByNameSource(name,source)
+    def removeWaifu(self,waifuData:WaifuData):
+        toRemove=self.getWaifu(waifuData)
         self.waifus.remove(toRemove)
 
     def save(self):
@@ -139,8 +140,8 @@ class Server:
             loaded=Server(identity)
         return loaded
 
-    def getWaifuByNameSource(self,name:str,source:str):
-        selectedWaifus = [waifu for waifu in self.waifus if waifu.name==name and waifu.source==source]
+    def getWaifu(self,waifuData:WaifuData):
+        selectedWaifus = [waifu for waifu in self.waifus if waifu.name==waifuData.name and waifu.source==waifuData.source]
         try:
             return selectedWaifus[0]
         except IndexError:
@@ -166,9 +167,9 @@ class Server:
                 raise InvalidPollStateError
         newPoll=Poll(self.identity,self.getOption(ServerOption.PollWaifuCount),quickLink)
         #select options
-        (names, sources) = newPoll.startPoll(self.waifus)
+        waifus = newPoll.startPoll(self.waifus)
         #create image
-        image = images.createPollImage(names,sources,self.getOption(ServerOption.PollWaifuImageSizePixels),self.getOption(ServerOption.PollWaifuImageAspect))
+        image = images.createPollImage(waifus,self.getOption(ServerOption.PollWaifuImageSizePixels),self.getOption(ServerOption.PollWaifuImageAspect))
         imageBytes=images.imageToBytes(image)
         #create vote buttons
         buttons=newPoll.createPollButtons(len(self.polls))
@@ -186,8 +187,8 @@ class Server:
         for userId in pollResults.awardTickets:
             self.modifyTickets(userId,pollResults.awardTickets[userId])
         #change ratings
-        for (name,source) in pollResults.ratingChanges:
-            self.getWaifuByNameSource(name,source).updateRating(pollResults.ratingChanges[(name,source)])
+        for (waifu) in pollResults.ratingChanges:
+            self.getWaifu(waifu).updateRating(pollResults.ratingChanges[waifu])
 
     def removePoll(self,poll:Poll):
         self.polls.remove(poll)

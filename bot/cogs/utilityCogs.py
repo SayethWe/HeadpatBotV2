@@ -7,6 +7,7 @@ from guilds import Server
 #local imports
 import database, images
 from headpatBot import HeadpatBot
+from injections import folderWaifu
 #library imports
 from disnake import ApplicationCommandInteraction, File
 from disnake.ext import commands, tasks
@@ -46,9 +47,10 @@ class TimerCog(commands.Cog):
             for server in self.bot.servers.values():
                 await database.storeGuild(server)
             for waifuImage in glob.glob('*/*/*.qoi',root_dir=images.POLL_FOLDER):
-                waifuData=waifuImage.split('/')
+                waifuTuple=waifuImage.split('/')
                 imagePath=os.path.join(images.POLL_FOLDER,waifuImage)
-                await database.storeWaifuFile(waifuData[1],waifuData[0],imagePath,int(waifuData[2].replace('.qoi','')))
+                waifuData=await folderWaifu(waifuImage)
+                await database.storeWaifuFile(waifuData,imagePath,int(waifuTuple[2].replace('.qoi','')))
 
     @storeDatabase.before_loop
     @storeFiles.before_loop
@@ -61,12 +63,10 @@ class TimerCog(commands.Cog):
             self.logger.info('Fetching from Database to File System')
             allWaifus=await database.getAllWaifus()
             for waifu in allWaifus:
-                name=waifu[0]
-                source=waifu[1]
-                waifuHashes = await database.getWaifuHashes(name,source)
+                waifuHashes = await database.getWaifuHashes(waifu)
                 for waifuHash in waifuHashes:
                     waifuImage=await database.loadWaifu(waifuHash)
-                    images.saveRawPollImage(waifuImage,waifuHash,images.sourceNameFolder(name,source))
+                    images.saveRawPollImage(waifuImage,waifuHash,waifu)
             allGuilds=await database.getAllGuilds()
             for guildId in allGuilds:
                 guild = await database.getGuild(guildId)

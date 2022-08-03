@@ -1,15 +1,17 @@
 from disnake import ApplicationCommandInteraction
-import glob
+import os, glob
 from headpatExceptions import WaifuDNEError
-import images
 from disnake.ext import commands
 from dataclasses import dataclass
+
+POLL_FOLDER=os.path.join('img','waifu')
+HEADPAT_FOLDER=os.path.join('img','headpat')
 
 async def source_autocomplete(
     inter:ApplicationCommandInteraction,
     input:str
 ):
-    raw_list = glob.glob('*/*/',root_dir=images.POLL_FOLDER)
+    raw_list = glob.glob('*/*/',root_dir=POLL_FOLDER)
     valid = sorted(set([source.split('/')[0] for source in raw_list if input.title() in source]))
     return valid[:25] #discord can take 25 options
 
@@ -17,7 +19,7 @@ async def name_autocomplete(
     inter:ApplicationCommandInteraction,
     input:str
 ):
-    raw_list = glob.glob('*/*/',root_dir=images.POLL_FOLDER)
+    raw_list = glob.glob('*/*/',root_dir=POLL_FOLDER)
     valid = sorted(set([source.split('/')[1] for source in raw_list if input.title() in source]))
     return valid[:25]
 
@@ -25,7 +27,7 @@ async def waifu_autocomplete(
     inter:ApplicationCommandInteraction,
     input:str
 ):
-    raw_list = glob.glob('*/*',root_dir=images.POLL_FOLDER)
+    raw_list = glob.glob('*/*',root_dir=POLL_FOLDER)
     valid = sorted(set([source for source in raw_list if input.title() in source]))
     return valid[:25]
 
@@ -41,7 +43,7 @@ async def pull_autocomplete(
     inter:ApplicationCommandInteraction,
     input:str
 ):
-    raw_list = glob.glob('*/*',root_dir=images.POLL_FOLDER)
+    raw_list = glob.glob('*/*',root_dir=POLL_FOLDER)
     valid=[]
     for waifu in raw_list:
         if input.title() in waifu:
@@ -60,7 +62,7 @@ async def server_autocomplete(
     valid = sorted(set([waifuFolder for waifuFolder in rawList if input.title() in waifuFolder]))
     return valid[:25]
 
-@dataclass
+@dataclass(eq=True,frozen=True)
 class WaifuData:
     _name:str
     _source: str

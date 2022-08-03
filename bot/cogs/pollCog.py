@@ -2,7 +2,6 @@
 import logging, os
 from io import BytesIO
 #local imports
-import images
 from polls import Poll
 from headpatExceptions import InsufficientOptionsError, InvalidPollStateError
 from headpatBot import HeadpatBot

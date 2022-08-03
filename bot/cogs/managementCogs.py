@@ -32,15 +32,13 @@ class ManageWaifusCog(commands.Cog):
         inter:ApplicationCommandInteraction,
         waifuData:WaifuData = commands.inject(missingWaifu)
     ):
-        name=waifuData.name
-        source=waifuData.source
         try:
-            self.bot.servers[inter.guild.id].addWaifu(name,source)
-            await self.bot.respond(inter,'WAIFU.PULL.PASS',name,source)
+            self.bot.servers[inter.guild.id].addWaifu(waifuData)
+            await self.bot.respond(inter,'WAIFU.PULL.PASS',waifuData.name,waifuData.source)
         except WaifuConflictError:
-            await self.bot.respond(inter,'WAIFU.ERROR.CONFLICT',name,source)
+            await self.bot.respond(inter,'WAIFU.ERROR.CONFLICT',waifuData.name,waifuData.source)
         except WaifuDNEError:
-            await self.bot.respond(inter,'WAIFU.ERROR.DNE',name,source)
+            await self.bot.respond(inter,'WAIFU.ERROR.DNE',waifuData.name,waifuData.source)
 
     @manage_waifus.sub_command(
         description="remove a waifu from further polls on this server"
@@ -50,13 +48,11 @@ class ManageWaifusCog(commands.Cog):
         inter:ApplicationCommandInteraction,
         waifuData:WaifuData = commands.inject(serverWaifu)
     ):
-        name=waifuData.name
-        source=waifuData.source
         try:
-            self.bot.servers[inter.guild.id].removeWaifu(name,source)
-            await self.bot.respond(inter,'WAIFU.REMOVE.PASS',name,source)
+            self.bot.servers[inter.guild.id].removeWaifu(waifuData)
+            await self.bot.respond(inter,'WAIFU.REMOVE.PASS',waifuData.name,waifuData.source)
         except WaifuDNEError:
-            await self.bot.respond(inter,'WAIFU.ERROR.DNE',name,source)
+            await self.bot.respond(inter,'WAIFU.ERROR.DNE',waifuData.name,waifuData.source)
 
     @manage_waifus.sub_command(
         description="add a whole list of waifus defined in a CSV to your server"
@@ -79,7 +75,7 @@ class ManageWaifusCog(commands.Cog):
                     waifu=waifu.replace('\r','').replace('\n','').strip()
                     info=waifu.split(',')
                     try:
-                        self.bot.servers[inter.guild.id].addWaifu(info[0],info[1])
+                        self.bot.servers[inter.guild.id].addWaifu(WaifuData(info[0],info[1]))
                     except WaifuDNEError:
                         numFailed+=1
                         failedList.write(f'unable to find in database: {waifu}\n')

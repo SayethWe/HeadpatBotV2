@@ -163,18 +163,16 @@ class Poll:
 
     def startPoll(self,waifusIn:list[Waifu]):
         selection = Poll.selectPoll(self.size,[option.rating for option in waifusIn])
-        names=list[str]()
-        sources=list[str]()
+        waifusOut=list[WaifuData]()
         for index in selection:
             choice = waifusIn[index]
-            names.append(choice.name)
-            sources.append(choice.source)
+            waifusOut.append(WaifuData(choice.name,choice.source))
             self.ratings.append(choice.rating)
             self.claimers.append(choice.claimer)
             self.levels.append(choice.level)
             self.waifus.append(WaifuData(choice.name,choice.source))
         self.open=True #only now do we mark open
-        return (names,sources)
+        return (waifusOut)
         
     def endPoll(self): #TODO: maybe take in an inter from commandclose, but if none, do autoclose stuff?
         #TODO: Figure out how to get the original message, and edit it. get_message returned none, and no equivalent fetch seems to exist.
@@ -186,11 +184,11 @@ class Poll:
             logger.debug('Unparticipated poll')
             return PollResults({},{})
         ratingDelta = self.ratingChanges()
-        ratingUpdates=dict[tuple[str,str],int]()
+        ratingUpdates=dict[WaifuData,int]()
         awardPoints=dict[int,int]()
         #for each waifu in the poll
         for i in range(self.size):
-            ratingUpdates[(self.waifus[i].name,self.waifus[i].source)]=ratingDelta[i]
+            ratingUpdates[self.waifus[i]]=ratingDelta[i]
             #award vote points to waifu claimer
             Poll.addTicketsToDict(awardPoints,self.claimers[i],Poll.VOTING_TICKETS+int(self.votes[i]*np.log(self.levels[i]*self.levels[i]+1)))
         #for each user who voted
@@ -213,7 +211,7 @@ class Poll:
     def createPollButtons(self,pollInd:int):
         buttons:list[Button]=[None]*(self.size+1)
         for i in range(self.size):
-            buttons[i] = Button(style=ButtonStyle.blurple,label=f'{self.waifus[i].name}|{self.waifus[i].source}',custom_id=f'poll|{self.messageId}|{pollInd}|{i}')
+            buttons[i] = Button(style=ButtonStyle.blurple,label=f'{self.waifus[i]}',custom_id=f'poll|{self.messageId}|{pollInd}|{i}')
         buttons[-1]=Button(style=ButtonStyle.green,label='Confirm',custom_id=f'poll|{self.messageId}|{pollInd}|Confirm')
         return buttons
 
@@ -388,4 +386,4 @@ class Poll:
 @dataclass(frozen=True)
 class PollResults:
     awardTickets:dict[int,int]
-    ratingChanges:dict[tuple[str,str],int]
+    ratingChanges:dict[WaifuData,int]
