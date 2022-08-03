@@ -2,8 +2,7 @@
 .prod
 .vscode
 img/waifu
-guilds/*.p
-guilds/*.yaml
+guilds*/
 postgre
 __pycache__
 utilities

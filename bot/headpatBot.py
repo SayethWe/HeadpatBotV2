@@ -121,6 +121,5 @@ class HeadpatBot(commands.InteractionBot):
         request=request.upper()
         replies:list[str] = glom(self.responses,request)
         reply:str = self.rng.choice(replies)
-        reply=reply.replace('[NEWLINE]','\n')
         reply=reply.format(*args)
         return reply

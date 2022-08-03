@@ -1,6 +1,6 @@
 # Responses
-# n.b: if starting with an argument tag ({#}) or using a colon, surround text with quotes
-# Instances of [NEWLINE] are converted by responder to line breaks
+# n.b: if starting with an argument tag ({#}) or using a colon, surround text with quotes (Flow Scalars)
+# Multiline text can be done with blocks scalars (see: https://yaml-multiline.info/)
 ACTIVITY:
   PLAYING:
     - with waifus while you're not looking
@@ -77,9 +77,13 @@ WAIFU: #waifu
       - ding! Your waifu is ready!
     FOOTER:
       UNCLAIMED:
-        - 'Rating: {0}'
+        - |
+          Rating: {0}
       CLAIMED:
-        - 'Claimed by {1} at {2}[NEWLINE]Level: {3}[NEWLINE]Rating: {0}'
+        - |
+          Claimed by {1} at {2}
+          Level: {3}
+          Rating: {0}
   REMOVE: #remove
     PASS:
       - Okay! {0} is gone. Less competition for me!
@@ -157,4 +161,6 @@ GACHA:
     SUCCESS: 
       - spent {0} tickets to raise {1} to level {2}
   LIST:
-    - You've collected the following **{0}** waifus:[NEWLINE]{1}
+    - | 
+      You've collected the following **{0}** waifus:
+      {1}

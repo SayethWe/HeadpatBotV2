@@ -385,7 +385,7 @@ class Poll:
     def __repr__(self) -> str:
         return f'Poll with{vars(self)}'
 
-@dataclass
+@dataclass(frozen=True)
 class PollResults:
     awardTickets:dict[int,int]
     ratingChanges:dict[tuple[str,str],int]

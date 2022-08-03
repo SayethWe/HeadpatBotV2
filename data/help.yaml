@@ -57,6 +57,31 @@ options:
   - gacha collection expiration hours -> number of hours a level 1 waifu will stay claimed. Between 1 and 10,000
   - ''
   - This command family is designed to be used by moderators only
+LIST_COMMANDS:
+  - "```"
+  - manage_waifus
+  - ..pull
+  - ..remove
+  - ..pull_csv
+  - options
+  - poll
+  - ..start
+  - ..close
+  - ..results
+  - jump_to_poll
+  - headpat
+  - waifu
+  - ..suggest
+  - ..show
+  - ..get_list
+  - gacha
+  - ..roll
+  - ..collection
+  - ..remove
+  - ..improve
+  - tickets
+  - ..get
+  - "```"
 ADD_ME:
   - You want *me* in **your** server?
   - YAY! just click below and we can get started!
