@@ -184,11 +184,11 @@ class Poll:
             logger.debug('Unparticipated poll')
             return PollResults({},{})
         ratingDelta = self.ratingChanges()
-        ratingUpdates=dict[tuple[str,str],int]()
+        ratingUpdates=dict[WaifuData,int]()
         awardPoints=dict[int,int]()
         #for each waifu in the poll
         for i in range(self.size):
-            ratingUpdates[(self.waifus[i].name,self.waifus[i].source)]=ratingDelta[i]
+            ratingUpdates[self.waifus[i]]=ratingDelta[i]
             #award vote points to waifu claimer
             Poll.addTicketsToDict(awardPoints,self.claimers[i],Poll.VOTING_TICKETS+int(self.votes[i]*np.log(self.levels[i]*self.levels[i]+1)))
         #for each user who voted
@@ -386,4 +386,4 @@ class Poll:
 @dataclass
 class PollResults:
     awardTickets:dict[int,int]
-    ratingChanges:dict[tuple[str,str],int]
+    ratingChanges:dict[WaifuData,int]

@@ -23,9 +23,9 @@ class WaifuCog(commands.Cog):
         data = button_inter.component.custom_id.split('|')
         if data[0] != 'approval':
             return
-        #await button_inter.response.defer()
         imageHash = int(data[1])
         if data[2] == 'accept':
+            await button_inter.response.defer() #inside if statement because modals have issues with defered responses
             (imageArray,waifuData) = await database.removeApproval(imageHash) #we've interacted. remove the approval, and get the data
             self.logger.debug(f'approving {waifuData}')
             existingWaifu = images.saveRawPollImage(imageArray,imageHash,waifuData) #throw into the filesystem
@@ -48,7 +48,7 @@ class WaifuCog(commands.Cog):
             self.logger.debug(f'rejecting {waifuData}')
             await self.bot.respond(button_inter,'WAIFU.ADD.DENY',waifuData.name)
             #remove the buttons
-            await button_inter.edit_original_message(components=None)
+            await button_inter.message.edit(components=None)
         elif data[2] == 'modify':
             oldWaifu = await database.getApproval(imageHash)
             #create and send an edit modal
@@ -79,7 +79,7 @@ class WaifuCog(commands.Cog):
             else:
                 await self.bot.respond(button_inter,'WAIFU.ADD.REMOVE.ONE',waifuData.name)
             #remove the buttons
-            await button_inter.edit_original_message(components=None)
+            await button_inter.message.edit(components=None)
 
     @commands.Cog.listener(name="on_modal_submit")
     async def approvalEditHandler(self,modal_inter:ModalInteraction):
@@ -90,7 +90,7 @@ class WaifuCog(commands.Cog):
         newName = modal_inter.text_values['editName']
         newSource = modal_inter.text_values['editSource']
         await modal_inter.message.edit(content=self.bot.getResponse('WAIFU.ADD.ASK',newName,newSource))
-        await database.modifyApproval(imageHash,newName,newSource)
+        await database.modifyApproval(imageHash,WaifuData(newName,newSource))
         await self.bot.respond(modal_inter,'WAIFU.ADD.EDIT',newName,ephemeral=True)
 
     # Headpat
@@ -213,7 +213,7 @@ class WaifuCog(commands.Cog):
             if scope == "Global":
                 count=0
                 for waifuStr in glob.glob('*/*/',root_dir=images.POLL_FOLDER):
-                    waifuData = folderWaifu(waifuStr)
+                    waifuData = await folderWaifu(waifuStr)
                     waifuList.write(f'{waifuData}\n')
                     count+=1
                 reply = self.bot.getResponse('WAIFU.LIST.GLOBAL',count)
@@ -225,8 +225,10 @@ class WaifuCog(commands.Cog):
             else:
                 count=0
                 for waifuStr in glob.glob('*/*/',root_dir=images.POLL_FOLDER):
-                    waifuData = folderWaifu(waifuStr)
-                    if not self.bot.servers[inter.guild.id].getWaifu(waifuData):
+                    waifuData = await folderWaifu(waifuStr)
+                    try:
+                        self.bot.servers[inter.guild.id].getWaifu(waifuData)
+                    except WaifuDNEError:
                         waifuList.write(f'{waifuData}\n')
                         count+=1
                 reply = self.bot.getResponse('WAIFU.LIST.DIFFERENCE',count)
@@ -303,7 +305,7 @@ class GachaCog(commands.Cog):
     ):
         server=self.bot.servers[inter.guild.id]
         try:
-            waifu=server.getWaifuByNameSource(waifuData.name,waifuData.source)
+            waifu=server.getWaifu(waifuData)
             if waifu.claimer != inter.author.id:
                 await self.bot.respond(inter,'GACHA.RELEASE.NOT_OWNER')
                 return

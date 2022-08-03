@@ -101,7 +101,7 @@ class Server:
                 raise WaifuConflictError
             except WaifuDNEError:
                 #server does not have waifu
-                newWaifu = Waifu(waifuData,1)
+                newWaifu = Waifu(waifuData.name,waifuData.source,1)
                 self.waifus.append(newWaifu)
                 return newWaifu
         else:
@@ -167,9 +167,9 @@ class Server:
                 raise InvalidPollStateError
         newPoll=Poll(self.identity,self.getOption(ServerOption.PollWaifuCount),quickLink)
         #select options
-        (names, sources) = newPoll.startPoll(self.waifus)
+        waifus = newPoll.startPoll(self.waifus)
         #create image
-        image = images.createPollImage(names,sources,self.getOption(ServerOption.PollWaifuImageSizePixels),self.getOption(ServerOption.PollWaifuImageAspect))
+        image = images.createPollImage(waifus,self.getOption(ServerOption.PollWaifuImageSizePixels),self.getOption(ServerOption.PollWaifuImageAspect))
         imageBytes=images.imageToBytes(image)
         #create vote buttons
         buttons=newPoll.createPollButtons(len(self.polls))
@@ -187,8 +187,8 @@ class Server:
         for userId in pollResults.awardTickets:
             self.modifyTickets(userId,pollResults.awardTickets[userId])
         #change ratings
-        for (name,source) in pollResults.ratingChanges:
-            self.getWaifuByNameSource(name,source).updateRating(pollResults.ratingChanges[(name,source)])
+        for (waifu) in pollResults.ratingChanges:
+            self.getWaifu(waifu).updateRating(pollResults.ratingChanges[waifu])
 
     def removePoll(self,poll:Poll):
         self.polls.remove(poll)

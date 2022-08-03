@@ -62,7 +62,7 @@ async def server_autocomplete(
     valid = sorted(set([waifuFolder for waifuFolder in rawList if input.title() in waifuFolder]))
     return valid[:25]
 
-@dataclass
+@dataclass(eq=True,frozen=True)
 class WaifuData:
     _name:str
     _source: str
