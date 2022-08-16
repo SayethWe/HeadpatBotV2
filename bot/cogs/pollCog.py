@@ -30,8 +30,10 @@ class PollCog(commands.Cog):
             await self.bot.respond(button_inter,'WAIFU.POLL.VOTE.ADD',poll.waifus[int(data[3])].name,ephemeral=True)
         elif outcome==Poll.BUTTON_RESULTS.VOTE_REMOVE:
             await self.bot.respond(button_inter,'WAIFU.POLL.VOTE.REMOVE',poll.waifus[int(data[3])].name,ephemeral=True)
-        elif outcome == Poll.BUTTON_RESULTS.CONFIRM:
-            await self.bot.respond(button_inter,'WAIFU.POLL.VOTE.CONFIRM',button_inter.author.display_name)
+        elif outcome == Poll.BUTTON_RESULTS.CONFIRM_NEW:
+            await self.bot.respond(button_inter,'WAIFU.POLL.VOTE.CONFIRM.NEW',button_inter.author.display_name)
+        elif outcome == Poll.BUTTON_RESULTS.CONFIRM_OLD:
+            await self.bot.respond(button_inter,'WAIFU.POLL.VOTE.CONFIRM.PREV',ephemeral=True)
         elif outcome==Poll.BUTTON_RESULTS.CLOSED:
             await self.bot.respond(button_inter,'WAIFU.POLL.VOTE.CLOSED',ephemeral=True)
 

@@ -73,17 +73,21 @@ WAIFU: #waifu
       LAST:
         - removed {0}
   SHOW: #show
-    PASS:
-      - ding! Your waifu is ready!
-    FOOTER:
-      UNCLAIMED:
-        - |
-          Rating: {0}
-      CLAIMED:
-        - |
-          Claimed by {1} at {2}
-          Level: {3}
-          Rating: {0}
+    GLOBAL:
+      - |
+        *{0}*
+    UNCLAIMED:
+      - |
+        __{0}__
+
+        Rating: {1}
+    CLAIMED:
+      - |
+        **{0}**
+
+        Claimed by {2} <t:{3}:R>
+        Level: {4}
+        Rating: {1}
   REMOVE: #remove
     PASS:
       - Okay! {0} is gone. Less competition for me!
@@ -108,13 +112,27 @@ WAIFU: #waifu
       - You don't have a poll to close!
     VOTE:
       ADD:
-        - you voted for {0}. How Cute.
+        - You voted for {0}. How Cute. Will you be casting another?
+        - That's one vote added for {0}. Anyone else?
+        - Cool. A vote for {0}. Will that be it?
+        - I hope this vote for {0} won't be your only vote.
       REMOVE:
-        - your vote for {0} is gone. Pick better next time?
+        - Your vote for {0} is gone. Pick better next time?
+        - You've canceled your vote for {0}.
+        - Y'know, you don't have to dash {0}'s hopes like that.
+        - Votes are unlimited. Still, I've removed that vote for {0} for you.
+        - One less for {0}. You're still voting for some others though, right?
       CONFIRM:
-        - '{0} has finished voting!'
+        NEW:
+          - '{0} has finished voting!'
+          - "{0}'s votes are in!"
+        PREV:
+          - You've already voted on that poll.
+          - Your votes are already counted.
+          - I've got my eyes on you. Don't try to commit fraud by double-voting.
       CLOSED:
         - That poll is no longer taking votes
+        - Voting for that poll has concluded.
     INSUFFICIENT:
       - Not enough waifus avaialable! Add more and try again.
     RESULTS:

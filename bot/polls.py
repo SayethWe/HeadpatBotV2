@@ -88,8 +88,9 @@ class Poll:
     class BUTTON_RESULTS(Enum):
         VOTE_ADD=0
         VOTE_REMOVE=1
-        CONFIRM=2
+        CONFIRM_NEW=2
         CLOSED=3
+        CONFIRM_OLD=4
 
     def __init__(self,messageId:int,size:int,quickLink:str):
         self.messageId=messageId
@@ -229,7 +230,7 @@ class Poll:
 
     def doConfirm(self,userid:int):
         if userid in self.users or not self.open:
-            return Poll.BUTTON_RESULTS.CLOSED
+            return Poll.BUTTON_RESULTS.CONFIRM_OLD
         #TODO lock vote buttons by user, which cannot be done yet.
         #self.confirmVotes(userid)
         self.users.append(userid)
@@ -237,7 +238,7 @@ class Poll:
             if userid in self.voters[i]:
                 self.voters[i].remove(userid) #clear user out of votes because we no longer need to track that
                 self.votes[i] += 1 #store the vote anonymously
-        return Poll.BUTTON_RESULTS.CONFIRM
+        return Poll.BUTTON_RESULTS.CONFIRM_NEW
 
     def performancePlot(self,ax:plt.Axes):
         expectation=Poll.cubicSigmoid(self.ratings)

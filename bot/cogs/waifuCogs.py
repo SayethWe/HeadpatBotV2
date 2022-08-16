@@ -176,8 +176,6 @@ class WaifuCog(commands.Cog):
             return
         imageBytes = images.imageToBytes(image)
         attachment = File(imageBytes, filename = f'{waifuData}.png')
-        embed=Embed(title=waifuData)
-        embed.set_image(file=attachment)
         #check the server to see if we can add extra information
         try:
             serverSide=self.bot.servers[inter.guild.id].getWaifu(waifuData)
@@ -185,16 +183,15 @@ class WaifuCog(commands.Cog):
             #add rating and claim info
             if serverSide.claimer == 0:
                 #unclaimed
-                footer_text=self.bot.getResponse('WAIFU.SHOW.FOOTER.UNCLAIMED',serverSide.rating)
+                await self.bot.respond(inter,'WAIFU.SHOW.UNCLAIMED',waifuData, serverSide.rating,file=attachment)
             else:
                 claimer = await inter.guild.getch_member(serverSide.claimer)
-                footer_text=self.bot.getResponse('WAIFU.SHOW.FOOTER.CLAIMED',
-                    serverSide.rating,claimer.display_name,
-                    serverSide.claimedAt.strftime("%Y/%m/%d %H:%M %Z"),serverSide.level)
-            embed.set_footer(text=footer_text)
+                await self.bot.respond(inter,'WAIFU.SHOW.CLAIMED', waifuData,
+                    serverSide.rating, claimer.display_name,
+                    int(serverSide.claimedAt.timestamp()),serverSide.level,
+                    file=attachment)
         except WaifuDNEError:
-            pass #waifu did not exist serverside
-        await self.bot.respond(inter,'WAIFU.SHOW.PASS',embed=embed)
+            await self.bot.respond(inter,'WAIFU.SHOW.GLOBAL',waifuData,file=attachment)
 
     @waifu.sub_command(
         description="get a list of waifus, either in this server, or available for pulls"
